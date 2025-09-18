@@ -3,19 +3,71 @@
 import { useState, useRef } from "react";
 import type { DragEvent } from "react";
 import { UploadCloud } from "lucide-react";
+import JSZip from "jszip";
+import { useWorkflowStore } from "./editfile";
 
 function UploadZone() {
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { setProcessState, resetWorkflow } = useWorkflowStore();
 
-  const handleFile = (file: File) => {
-    if (file && file.name.endsWith(".zip")) {
-      console.log("Accepted file:", file.name);
-    } else {
+  const handleFile = async (file: File) => {
+    if (!file || !file.name.endsWith(".zip")) {
       alert("Invalid file type. Please upload a .zip file.");
+      return;
+    }
+
+    try {
+      const zip = await JSZip.loadAsync(file);
+      const zipEntries = Object.values(zip.files);
+      const rootFiles = zipEntries.filter(
+        (entry) => !entry.dir && entry.name.indexOf("/") === -1,
+      );
+
+      let finalFileList: string[] = [];
+
+      if (rootFiles.length >= 2) {
+        finalFileList = rootFiles.map(
+          (entry) => entry.name.split("/").pop() || entry.name,
+        );
+      } else if (rootFiles.length === 0) {
+        const rootFolders = zipEntries.filter(
+          (entry) => entry.dir && entry.name.split("/").length === 2,
+        );
+        if (rootFolders.length === 1) {
+          const singleFolderName = rootFolders[0].name;
+          finalFileList = zipEntries
+            .filter(
+              (entry) =>
+                !entry.dir &&
+                entry.name.startsWith(singleFolderName) &&
+                entry.name.substring(singleFolderName.length).indexOf("/") ===
+                  -1,
+            )
+            .map((entry) => entry.name.split("/").pop() || entry.name);
+        }
+      }
+
+      if (finalFileList.length >= 2) {
+        console.log("Processed files:", finalFileList);
+        setProcessState(finalFileList);
+      } else {
+        console.error(
+          "Validation Error: The zip file must contain at least 2 files at the root or within a single top-level folder.",
+        );
+        alert(
+          "Invalid zip structure. Please ensure there are at least two Gerber files.",
+        );
+        resetWorkflow();
+      }
+    } catch (error) {
+      console.error("Error processing zip file:", error);
+      alert("Could not read the zip file. It may be corrupt.");
+      resetWorkflow();
     }
   };
 
+  // --- Event handlers ---
   const handleDragOver = (e: DragEvent<HTMLDivElement>) => {
     e.preventDefault();
   };
@@ -29,19 +81,16 @@ function UploadZone() {
   const handleDrop = (e: DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     setIsDragging(false);
-    const files = e.dataTransfer.files;
-    if (files && files.length > 0) {
-      handleFile(files[0]);
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      handleFile(e.dataTransfer.files[0]);
     }
   };
-
   const handleDivClick = () => {
     fileInputRef.current?.click();
   };
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (files && files.length > 0) {
-      handleFile(files[0]);
+    if (e.target.files && e.target.files.length > 0) {
+      handleFile(e.target.files[0]);
     }
   };
 
@@ -70,14 +119,9 @@ function UploadZone() {
         className="hidden"
         accept=".zip"
       />
-
       <UploadCloud
-        className={`
-          h-16 w-16 mb-4
-          ${isDragging ? "text-[var(--color-accent)]" : "text-gray-500"}
-        `}
+        className={`h-16 w-16 mb-4 ${isDragging ? "text-[var(--color-accent)]" : "text-gray-500"}`}
       />
-
       <p className="text-lg font-semibold text-[var(--color-text)]">
         Click to browse or drag & drop a file
       </p>
