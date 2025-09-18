@@ -9,7 +9,7 @@
 const KICAD_NAMES: &[&str] = &["Edge_Cuts", "F_Cu", "F_Mask"];
 
 // Define the priority order for Gerber extensions.
-const GERBER_EXTENSIONS: &[&str] = &["gto", "gtl", "gbl"];
+const GERBER_EXTENSIONS: &[&str] = &["gto", "gtl", "gbl", "gm13", "gm1", "gko"];
 
 // This function sorts a list of file paths based on predefined Gerber file patterns.
 // It prioritizes files with KiCad specific names, then standard Gerber extensions.
