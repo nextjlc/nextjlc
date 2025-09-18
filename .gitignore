@@ -1,0 +1,4 @@
+/target
+.env
+/installer/installer.exe
+.DS_Store
