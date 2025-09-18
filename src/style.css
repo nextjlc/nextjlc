@@ -1,2 +1,117 @@
 /* src/style.css */
 
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-primary: #161616;
+  --color-secondary: #232323;
+  --color-tertiary: #3a3a3a;
+  --color-bg: #ffffff;
+  --color-bg-alt: #ececec;
+  --color-text: #161616;
+  --color-subtext: #555555;
+  --color-progress: var(--color-primary);
+  --scrollbar-track: #ececec;
+  --scrollbar-thumb: #c1c1c1;
+  --scrollbar-thumb-hover: #a1a1a1;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-primary: #ececec;
+    --color-secondary: #ffffff;
+    --color-tertiary: #cfcfcf;
+    --color-bg: #161616;
+    --color-bg-alt: #232323;
+    --color-text: #ffffff;
+    --color-subtext: #a1a1a1;
+    --color-progress: var(--color-primary);
+    --scrollbar-track: #232323;
+    --scrollbar-thumb: #424242;
+    --scrollbar-thumb-hover: #555555;
+  }
+}
+
+.blue {
+  --blue-color: #181828;
+}
+
+.site-footer {
+  --footer-border-color: color-mix(
+    in srgb,
+    var(--footer-background) 90%,
+    black
+  );
+  --footer-text-color: color-mix(
+    in srgb,
+    color-mix(in srgb, var(--color-text) 85%, var(--footer-background)),
+    black 15%
+  );
+  --footer-subtext-color: var(--color-subtext);
+}
+
+@media (prefers-color-scheme: dark) {
+  .site-footer {
+    --footer-border-color: color-mix(
+      in srgb,
+      var(--footer-background) 85%,
+      white
+    );
+    --footer-text-color: color-mix(
+      in srgb,
+      var(--color-primary) 85%,
+      var(--footer-background)
+    );
+    --footer-subtext-color: var(--color-subtext);
+  }
+}
+
+/* Scrollbar styles (webkit) */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: var(--scrollbar-thumb);
+  border-radius: 8px;
+  border: 2px solid var(--scrollbar-track);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--scrollbar-thumb-hover);
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
+/* Selection */
+::selection {
+  background-color: #fff9a8;
+  color: #1f2937;
+}
+
+::-moz-selection {
+  background-color: #fff9a8;
+  color: #1f2937;
+}
+
+@media (prefers-color-scheme: dark) {
+  ::selection {
+    background-color: #3f5e5c;
+    color: #e5e7eb;
+  }
+
+  ::-moz-selection {
+    background-color: #3f5e5c;
+    color: #e5e7eb;
+  }
+}
