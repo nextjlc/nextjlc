@@ -1,6 +1,6 @@
 /* examples/match_outline.rs */
 
-use nextjlc_core::outline::sort_gerber_files;
+use nextjlc::outline::sort_gerber_files;
 
 fn main() {
     // --- Test case 1: ad-gerber ---

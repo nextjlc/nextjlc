@@ -1,6 +1,6 @@
 /* examples/validation_check.rs */
 
-use nextjlc_core::validation::{ValidationReport, validate_gerber_files};
+use nextjlc::validation::{ValidationReport, validate_gerber_files};
 
 // A helper function to run a validation test case and print the results clearly.
 fn run_test_case(title: &str, files: &[String]) {

@@ -1,6 +1,6 @@
 /* examples/dcode_processing.rs */
 
-use nextjlc_core::dcode::process_d_codes;
+use nextjlc::dcode::process_d_codes;
 
 fn main() {
     let gerber_sample = r#"

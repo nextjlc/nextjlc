@@ -1,6 +1,6 @@
 /* examples/add_header.rs */
 
-use nextjlc_core::header::add_gerber_header;
+use nextjlc::header::add_gerber_header;
 
 fn main() {
     // Define some sample Gerber content with mixed line endings (CRLF).

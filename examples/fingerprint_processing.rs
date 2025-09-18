@@ -1,6 +1,6 @@
 /* examples/fingerprint_processing.rs */
 
-use nextjlc_core::fingerprint::add_fingerprint;
+use nextjlc::fingerprint::add_fingerprint;
 
 // A sample of a Gerber file header.
 // several lines starting with "%ADD", to see the fingerprinting in action.

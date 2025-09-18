@@ -1,6 +1,6 @@
 /* examples/rename_files.rs */
 
-use nextjlc_core::rename::{EdaType, map_filenames};
+use nextjlc::rename::{EdaType, map_filenames};
 use std::collections::BTreeMap;
 
 fn print_results(title: &str, mapping: &BTreeMap<String, String>) {
