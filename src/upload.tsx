@@ -5,6 +5,7 @@ import type { DragEvent } from "react";
 import { UploadCloud } from "lucide-react";
 import JSZip from "jszip";
 import { useWorkflowStore } from "./editfile";
+import type { GerberFile } from "./editfile";
 
 function UploadZone() {
   const [isDragging, setIsDragging] = useState(false);
@@ -20,41 +21,39 @@ function UploadZone() {
     try {
       const zip = await JSZip.loadAsync(file);
       const zipEntries = Object.values(zip.files);
+      let filesToProcess: JSZip.JSZipObject[] = [];
+
       const rootFiles = zipEntries.filter(
         (entry) => !entry.dir && entry.name.indexOf("/") === -1,
       );
-
-      let finalFileList: string[] = [];
-
       if (rootFiles.length >= 2) {
-        finalFileList = rootFiles.map(
-          (entry) => entry.name.split("/").pop() || entry.name,
-        );
+        filesToProcess = rootFiles;
       } else if (rootFiles.length === 0) {
         const rootFolders = zipEntries.filter(
           (entry) => entry.dir && entry.name.split("/").length === 2,
         );
         if (rootFolders.length === 1) {
           const singleFolderName = rootFolders[0].name;
-          finalFileList = zipEntries
-            .filter(
-              (entry) =>
-                !entry.dir &&
-                entry.name.startsWith(singleFolderName) &&
-                entry.name.substring(singleFolderName.length).indexOf("/") ===
-                  -1,
-            )
-            .map((entry) => entry.name.split("/").pop() || entry.name);
+          filesToProcess = zipEntries.filter(
+            (entry) =>
+              !entry.dir &&
+              entry.name.startsWith(singleFolderName) &&
+              entry.name.substring(singleFolderName.length).indexOf("/") === -1,
+          );
         }
       }
 
-      if (finalFileList.length >= 2) {
-        console.log("Processed files:", finalFileList);
-        setProcessState(finalFileList);
-      } else {
-        console.error(
-          "Validation Error: The zip file must contain at least 2 files at the root or within a single top-level folder.",
+      if (filesToProcess.length >= 2) {
+        const gerberFiles: GerberFile[] = filesToProcess.map((entry) => ({
+          name: entry.name.split("/").pop() || entry.name,
+          fileObject: entry,
+        }));
+        console.log(
+          "Processed files:",
+          gerberFiles.map((f) => f.name),
         );
+        setProcessState(gerberFiles);
+      } else {
         alert(
           "Invalid zip structure. Please ensure there are at least two Gerber files.",
         );
@@ -67,7 +66,6 @@ function UploadZone() {
     }
   };
 
-  // --- Event handlers ---
   const handleDragOver = (e: DragEvent<HTMLDivElement>) => {
     e.preventDefault();
   };
