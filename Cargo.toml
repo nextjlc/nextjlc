@@ -8,3 +8,5 @@ path = "src/lib.rs"
 crate-type = ["lib"]
 
 [dependencies]
+rand = "0.9"
+chrono = "0.4"
