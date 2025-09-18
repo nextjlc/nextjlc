@@ -3,7 +3,6 @@
 /* SPDX-License-Identifier: Public Domain */
 /*
  * Author Acha <acha@acha666.cn>
- * Author Canmi <t@canmi.icu>
  */
 
 use chrono::Local;
@@ -50,4 +49,11 @@ pub fn add_gerber_header(content: &str) -> String {
         now.format("%Y-%m-%d %H:%M:%S"),
         content.replace("\r\n", "\n")
     )
+}
+
+pub fn get_order_guide_text() -> &'static str {
+    r#"如何进行PCB下单
+
+请查看：
+https://prodocs.lceda.cn/cn/pcb/order-order-pcb/index.html"#
 }
