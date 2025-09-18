@@ -1,13 +1,16 @@
 /* src/client.tsx */
 
+import Footer from "./footer.tsx";
+
 function App() {
   return (
-    <div className="min-h-screen flex justify-center items-center bg-[var(--color-bg)]">
-      <h1 className="text-4xl font-bold text-[var(--color-text)]">
-        Hello, World!
-      </h1>
-    </div>
-  )
+    <main>
+      <div className="min-h-[100dvh] flex justify-center items-center">
+        <h1 className="text-4xl font-bold">Hello, World!</h1>
+      </div>
+      <Footer />
+    </main>
+  );
 }
 
-export default App
+export default App;
