@@ -3,11 +3,12 @@
 import { create } from "zustand";
 import type JSZip from "jszip";
 
-// Define a more detailed structure for each file
+export type SoftwareType = "Altium" | "KiCad" | "EasyEDA" | "None";
+
 export interface GerberFile {
   name: string;
   fileObject: JSZip.JSZipObject;
-  software?: "Altium" | "KiCad" | "EasyEDA"; // Optional property for the analysis result
+  software?: SoftwareType; // The type is now more specific
 }
 
 interface WorkflowState {
@@ -17,10 +18,7 @@ interface WorkflowState {
 
 interface WorkflowActions {
   setProcessState: (files: GerberFile[]) => void;
-  setFileSoftware: (
-    fileName: string,
-    software: "Altium" | "KiCad" | "EasyEDA",
-  ) => void;
+  setFileSoftware: (fileName: string, software: SoftwareType) => void;
   resetWorkflow: () => void;
 }
 
