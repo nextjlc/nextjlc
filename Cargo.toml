@@ -1,6 +1,6 @@
 [package]
 name = "nextjlc-core"
-version = "0.1.5"
+version = "0.1.6"
 edition = "2024"
 description = "A powerful library to convert and streamline Gerber file preparation for JLC."
 license-file = "LICENSE"
