@@ -2,6 +2,13 @@
 name = "nextjlc-core"
 version = "0.1.4"
 edition = "2024"
+description = "A powerful library to convert and streamline Gerber file preparation for JLC."
+license-file = "LICENSE"
+repository = "https://github.com/nextjlc/core"
+readme = "README.md"
+authors = ["Canmi <t@canmi.icu>", "HalfSweet <halfsweet@halfsweet.cn>", "Acha <acha@acha666.cn>"]
+keywords = ["fuckjlc", "transjlc", "openjlc", "nextjlc"]
+categories = ["data-structures", "encoding"]
 
 [lib]
 path = "src/lib.rs"
