@@ -9,22 +9,22 @@ use fancy_regex::Regex;
 use once_cell::sync::Lazy;
 use std::collections::BTreeMap;
 
-// Defines the supported EDA
+/// Defines the supported EDA
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum EdaType {
     Ad,    // Represents Altium Designer
     KiCad, // Represents KiCad
 }
 
-// A struct to hold a single renaming rule.
-// It pairs a logical name (e.g., "Gerber_TopLayer") with a compiled Regex pattern.
+/// A struct to hold a single renaming rule.
+/// It pairs a logical name (e.g., "Gerber_TopLayer") with a compiled Regex pattern.
 struct Rule {
     logical_name: &'static str,
     pattern: Regex,
 }
 
-// A helper function to create a Rule, panicking if the regex is invalid.
-// This ensures that all regex patterns are validated at compile time.
+/// A helper function to create a Rule, panicking if the regex is invalid.
+/// This ensures that all regex patterns are validated at compile time.
 fn rule(logical_name: &'static str, pattern_str: &'static str) -> Rule {
     Rule {
         logical_name,
@@ -32,7 +32,7 @@ fn rule(logical_name: &'static str, pattern_str: &'static str) -> Rule {
     }
 }
 
-// Static list of rules for Altium Designer, initialized lazily and only once.
+/// Static list of rules for Altium Designer, initialized lazily and only once.
 static AD_RULES: Lazy<Vec<Rule>> = Lazy::new(|| {
     vec![
         rule("Gerber_BoardOutlineLayer", "(?i)\\.GM(1|13)$"),
@@ -59,7 +59,7 @@ static AD_RULES: Lazy<Vec<Rule>> = Lazy::new(|| {
     ]
 });
 
-// Static list of rules for KiCad, initialized lazily and only once.
+/// Static list of rules for KiCad, initialized lazily and only once.
 static KICAD_RULES: Lazy<Vec<Rule>> = Lazy::new(|| {
     vec![
         rule("Gerber_BoardOutlineLayer", "(?i).*Edge_Cuts.*"),
@@ -88,7 +88,7 @@ static KICAD_RULES: Lazy<Vec<Rule>> = Lazy::new(|| {
     ]
 });
 
-// Maps a logical file type name to its final, standardized filename.
+/// Maps a logical file type name to its final, standardized filename.
 fn get_final_filename(logical_name: &str) -> String {
     match logical_name {
         "Gerber_TopSolderMaskLayer" => "Gerber_TopSolderMaskLayer.GTS".to_string(),
@@ -114,8 +114,8 @@ fn get_final_filename(logical_name: &str) -> String {
     }
 }
 
-// The main function of this module. It takes a list of filenames and an EDA type,
-// and returns a map of original filenames to their proposed new, standardized names.
+/// The main function of this module. It takes a list of filenames and an EDA type,
+/// and returns a map of original filenames to their proposed new, standardized names.
 pub fn map_filenames(files: &[String], eda_type: EdaType) -> BTreeMap<String, String> {
     let rules = match eda_type {
         EdaType::Ad => &AD_RULES,

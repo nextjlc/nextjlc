@@ -5,26 +5,26 @@
  * Author Canmi <t@canmi.icu>
  */
 
-// This function attempts to identify the CAD software that generated a file
-// based on the presence of specific keywords in its content.
-//
-// The matching is case-insensitive and checks for keywords in the following order:
-// 1. "altium"
-// 2. "kicad"
-// 3. "easyeda"
-// It returns the first match it finds.
-//
-// # Arguments
-//
-// * `content` - A string slice (`&str`) representing the content of the file.
-//
-// # Returns
-//
-// An `Option<&'static str>`:
-// - `Some("Altium")` if "altium" is found.
-// - `Some("KiCad")` if "kicad" is found.
-// - `Some("EasyEDA")` if "easyeda" is found.
-// - `None` if none of the keywords are found.
+/// This function attempts to identify the CAD software that generated a file
+/// based on the presence of specific keywords in its content.
+///
+/// The matching is case-insensitive and checks for keywords in the following order:
+/// 1. "altium"
+/// 2. "kicad"
+/// 3. "easyeda"
+/// It returns the first match it finds.
+///
+/// # Arguments
+///
+/// * `content` - A string slice (`&str`) representing the content of the file.
+///
+/// # Returns
+///
+/// An `Option<&'static str>`:
+/// - `Some("Altium")` if "altium" is found.
+/// - `Some("KiCad")` if "kicad" is found.
+/// - `Some("EasyEDA")` if "easyeda" is found.
+/// - `None` if none of the keywords are found.
 pub fn identify_software(content: &str) -> Option<&'static str> {
     // Convert the entire content to lowercase for case-insensitive matching.
     let lowercased_content = content.to_lowercase();

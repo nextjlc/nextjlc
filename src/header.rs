@@ -8,17 +8,17 @@
 use chrono::Local;
 use rand::Rng;
 
-// This function prepends a dynamically generated Gerber header to the given content.
-// The header includes a randomly selected software name, a randomized version number,
-// and the current timestamp. It also standardizes line endings to LF ('\n').
-//
-// # Arguments
-//
-// * `content` - A string slice (`&str`) representing the original file content.
-//
-// # Returns
-//
-// A new `String` with the generated header prepended to the processed content.
+/// This function prepends a dynamically generated Gerber header to the given content.
+/// The header includes a randomly selected software name, a randomized version number,
+/// and the current timestamp. It also standardizes line endings to LF ('\n').
+///
+/// # Arguments
+///
+/// * `content` - A string slice (`&str`) representing the original file content.
+///
+/// # Returns
+///
+/// A new `String` with the generated header prepended to the processed content.
 pub fn add_gerber_header(content: &str) -> String {
     // Initialize a random number generator.
     let mut rng = rand::rng();

@@ -5,24 +5,24 @@
  * Author HalfSweet <halfsweet@halfsweet.cn>
  */
 
-// This function processes a string of Gerber data to prepend "G54"
-// to specific D-codes.
-//
-// It iterates through each line of the input data and searches for D-codes
-// (e.g., D10*, D123*) that consist of 'D' followed by 2 to 4 digits and an asterisk.
-// For each valid D-code found, it prepends "G54".
-//
-// The function skips any lines that already contain aperture definitions ("%ADD")
-// or the "G54D" prefix to avoid redundant processing.
-//
-// # Arguments
-//
-// * `gerber_data` - A `String` containing the raw Gerber file content.
-//
-// # Returns
-//
-// A new `String` with the processed Gerber data where appropriate D-codes
-// have been prefixed with "G54".
+/// This function processes a string of Gerber data to prepend "G54"
+/// to specific D-codes.
+///
+/// It iterates through each line of the input data and searches for D-codes
+/// (e.g., D10*, D123*) that consist of 'D' followed by 2 to 4 digits and an asterisk.
+/// For each valid D-code found, it prepends "G54".
+///
+/// The function skips any lines that already contain aperture definitions ("%ADD")
+/// or the "G54D" prefix to avoid redundant processing.
+///
+/// # Arguments
+///
+/// * `gerber_data` - A `String` containing the raw Gerber file content.
+///
+/// # Returns
+///
+/// A new `String` with the processed Gerber data where appropriate D-codes
+/// have been prefixed with "G54".
 pub fn process_d_codes(gerber_data: String) -> String {
     let input_lines: Vec<&str> = gerber_data.split('\n').collect();
     let mut processed_lines = Vec::with_capacity(input_lines.len());

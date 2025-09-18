@@ -5,36 +5,36 @@
  * Author Canmi <t@canmi.icu>
  */
 
-// A struct to hold the successful result of a validation check.
-// It contains the calculated number of copper layers and a list of non-critical warnings.
+/// A struct to hold the successful result of a validation check.
+/// It contains the calculated number of copper layers and a list of non-critical warnings.
 #[derive(Debug, PartialEq, Eq)]
 pub struct ValidationReport {
     pub layer_count: u32,
     pub warnings: Vec<String>,
 }
 
-// Defines the prefixes for files that are absolutely required for a valid Gerber set.
+/// Defines the prefixes for files that are absolutely required for a valid Gerber set.
 const REQUIRED_PREFIXES: &[&str] = &[
     "Gerber_BoardOutlineLayer",
     "Gerber_TopLayer",
     "Gerber_TopSolderMaskLayer",
 ];
 
-// Validates a list of standardized Gerber filenames against a set of manufacturing rules.
-// This function is pure: it takes a list of names and returns a result without any I/O.
-//
-// # Arguments
-//
-// * `files` - A slice of strings, where each string is a filename that has already
-//   been renamed to the standard format (e.g., by the `rename` module).
-//
-// # Returns
-//
-// * `Ok(ValidationReport)` - If all critical rules pass. The report includes the
-//   detected copper layer count and a list of warnings for non-critical issues
-//   (e.g., missing silkscreen or paste layers).
-// * `Err(Vec<String>)` - If any critical rules fail. The vector contains a list of
-//   all error messages detailing what is missing or incorrect.
+/// Validates a list of standardized Gerber filenames against a set of manufacturing rules.
+/// This function is pure: it takes a list of names and returns a result without any I/O.
+///
+/// # Arguments
+///
+/// * `files` - A slice of strings, where each string is a filename that has already
+///   been renamed to the standard format (e.g., by the `rename` module).
+///
+/// # Returns
+///
+/// * `Ok(ValidationReport)` - If all critical rules pass. The report includes the
+///   detected copper layer count and a list of warnings for non-critical issues
+///   (e.g., missing silkscreen or paste layers).
+/// * `Err(Vec<String>)` - If any critical rules fail. The vector contains a list of
+///   all error messages detailing what is missing or incorrect.
 pub fn validate_gerber_files(files: &[String]) -> Result<ValidationReport, Vec<String>> {
     let mut errors: Vec<String> = Vec::new();
     let mut warnings: Vec<String> = Vec::new();

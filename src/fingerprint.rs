@@ -8,28 +8,28 @@
 use md5::{Digest, Md5};
 use rand::Rng;
 
-// This is the main public function that orchestrates the entire fingerprinting process.
-// It takes raw Gerber content and a boolean flag, and returns the content with an
-// embedded, unique fingerprint based on the file's own data.
-//
-// The process involves:
-// 1. Scanning for existing aperture definitions.
-// 2. Selecting a random definition as a template.
-// 3. Renumbering all subsequent apertures to create a space.
-// 4. Generating a unique dimension based on an MD5 hash of the content.
-// 5. Creating and inserting a new aperture definition line (the "fingerprint").
-//
-// If the file has too few aperture definitions (less than 6), it cannot be fingerprinted
-// and the original content is returned unchanged.
-//
-// # Arguments
-//
-// * `gerber_content` - A string slice (`&str`) of the entire Gerber file.
-// * `is_foreign_board_file` - A boolean indicating if a special prefix should be used for hashing.
-//
-// # Returns
-//
-// A new `String` containing the fingerprinted Gerber content.
+/// This is the main public function that orchestrates the entire fingerprinting process.
+/// It takes raw Gerber content and a boolean flag, and returns the content with an
+/// embedded, unique fingerprint based on the file's own data.
+///
+/// The process involves:
+/// 1. Scanning for existing aperture definitions.
+/// 2. Selecting a random definition as a template.
+/// 3. Renumbering all subsequent apertures to create a space.
+/// 4. Generating a unique dimension based on an MD5 hash of the content.
+/// 5. Creating and inserting a new aperture definition line (the "fingerprint").
+///
+/// If the file has too few aperture definitions (less than 6), it cannot be fingerprinted
+/// and the original content is returned unchanged.
+///
+/// # Arguments
+///
+/// * `gerber_content` - A string slice (`&str`) of the entire Gerber file.
+/// * `is_foreign_board_file` - A boolean indicating if a special prefix should be used for hashing.
+///
+/// # Returns
+///
+/// A new `String` containing the fingerprinted Gerber content.
 pub fn add_fingerprint(gerber_content: &str, is_foreign_board_file: bool) -> String {
     // Collect lines for analysis.
     let content_lines: Vec<&str> = gerber_content.lines().collect();

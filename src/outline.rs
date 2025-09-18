@@ -5,22 +5,22 @@
  * Author Canmi <t@canmi.icu>
  */
 
-// Define the priority order for KiCad names.
+/// Define the priority order for KiCad names.
 const KICAD_NAMES: &[&str] = &["Edge_Cuts", "F_Cu", "F_Mask"];
 
-// Define the priority order for Gerber extensions.
+/// Define the priority order for Gerber extensions.
 const GERBER_EXTENSIONS: &[&str] = &["gto", "gtl", "gbl", "gm13", "gm1", "gko"];
 
-// This function sorts a list of file paths based on predefined Gerber file patterns.
-// It prioritizes files with KiCad specific names, then standard Gerber extensions.
-//
-// # Arguments
-//
-// * `files` - A mutable slice of `String`s, where each string is a file path.
-//
-// # Returns
-//
-// A new `Vec<String>` containing the sorted file paths.
+/// This function sorts a list of file paths based on predefined Gerber file patterns.
+/// It prioritizes files with KiCad specific names, then standard Gerber extensions.
+///
+/// # Arguments
+///
+/// * `files` - A mutable slice of `String`s, where each string is a file path.
+///
+/// # Returns
+///
+/// A new `Vec<String>` containing the sorted file paths.
 pub fn sort_gerber_files(files: &mut [String]) -> Vec<String> {
     files.sort_by(|a, b| {
         // Determine the priority of file 'a'.
