@@ -19,21 +19,23 @@ export interface ProcessedGerberFile {
 
 interface WorkflowState {
   workflowState: "upload" | "process";
-  originalZipName: string | null; // To store the original filename
-  primaryEda: SoftwareType | null; // To store the detected primary EDA
+  originalZipName: string | null;
+  primaryEda: SoftwareType | null;
   files: GerberFile[];
   processedFiles: ProcessedGerberFile[];
   isProcessing: boolean;
+  progress: number;
 }
 
 interface WorkflowActions {
-  setProcessState: (files: GerberFile[], originalName: string) => void; // Pass in the name
+  setProcessState: (files: GerberFile[], originalName: string) => void;
   setFileSoftware: (fileName: string, software: SoftwareType) => void;
   startProcessing: () => void;
   setProcessedFiles: (
     files: ProcessedGerberFile[],
     primaryEda: SoftwareType,
-  ) => void; // Pass in the EDA
+  ) => void;
+  setProgress: (progress: number) => void;
   resetWorkflow: () => void;
 }
 
@@ -45,13 +47,15 @@ export const useWorkflowStore = create<WorkflowState & WorkflowActions>(
     isProcessing: false,
     originalZipName: null,
     primaryEda: null,
+    progress: 0,
     setProcessState: (files, originalName) =>
       set({
         workflowState: "process",
         files: files,
         originalZipName: originalName,
-        processedFiles: [], // Clear previous results on new upload
+        processedFiles: [],
         primaryEda: null,
+        progress: 0,
       }),
     resetWorkflow: () =>
       set({
@@ -60,6 +64,7 @@ export const useWorkflowStore = create<WorkflowState & WorkflowActions>(
         processedFiles: [],
         originalZipName: null,
         primaryEda: null,
+        progress: 0,
       }),
     setFileSoftware: (fileName, software) =>
       set((state) => ({
@@ -67,12 +72,14 @@ export const useWorkflowStore = create<WorkflowState & WorkflowActions>(
           f.name === fileName ? { ...f, software: software } : f,
         ),
       })),
-    startProcessing: () => set({ isProcessing: true, processedFiles: [] }),
+    startProcessing: () =>
+      set({ isProcessing: true, processedFiles: [], progress: 0 }),
     setProcessedFiles: (files, primaryEda) =>
       set({
         processedFiles: files,
         isProcessing: false,
         primaryEda: primaryEda,
       }),
+    setProgress: (progress) => set({ progress }),
   }),
 );
