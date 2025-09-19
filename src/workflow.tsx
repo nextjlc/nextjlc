@@ -21,6 +21,7 @@ const HeaderBadge = ({
   count: number;
 }) => {
   if (!software || count === 0) return null;
+
   const styles = {
     Altium: {
       badge: "bg-red-500/80 text-white",
@@ -39,19 +40,21 @@ const HeaderBadge = ({
       count: "bg-gray-700 text-white",
     },
   };
+
   const selectedStyle = styles[software as keyof typeof styles] || styles.None;
+
   return (
     <span
       className={`relative ml-2 px-2 py-0.5 rounded-full text-xs font-medium ${selectedStyle.badge}`}
     >
-      {" "}
-      {software}{" "}
+      {software}
       <span
-        className={`absolute -top-1.5 -right-1.5 flex items-center justify-center w-4 h-4 rounded-full text-[10px] font-bold shadow ${selectedStyle.count}`}
+        className={`absolute -top-1.5 -right-1.5 flex items-center justify-center
+                  w-4 h-4 rounded-full text-[10px] font-bold shadow
+                  ${selectedStyle.count}`}
       >
-        {" "}
-        {count}{" "}
-      </span>{" "}
+        {count}
+      </span>
     </span>
   );
 };
@@ -76,7 +79,7 @@ function Workflow() {
     const allFilesAnalyzed = files.every((f) => f.software !== undefined);
     if (allFilesAnalyzed) {
       setIsAnalysisComplete(true);
-      setTimeout(() => setProgress(0), 500);
+      setTimeout(() => setProgress(0), 500); // Hide bar after phase 1 is complete
       return;
     }
 
@@ -88,27 +91,33 @@ function Workflow() {
       let analyzedCount = total - filesToAnalyze.length;
       setProgress((analyzedCount / total) * 100);
 
-      for (const file of filesToAnalyze) {
-        try {
-          const fullContent = await file.fileObject.async("string");
-          const headerContent = fullContent.split("\n").slice(0, 10).join("\n");
-
-          // Pass only the header to the identification function.
-          const identifiedSoftware = await identifyFileType(headerContent);
-          setFileSoftware(file.name, identifiedSoftware || "None");
-        } catch (error) {
-          console.error(`Could not analyze file ${file.name}:`, error);
-          setFileSoftware(file.name, "None");
-        }
-        analyzedCount++;
-        setProgress((analyzedCount / total) * 100);
-      }
+      // Use Promise.all to run analyses in parallel for better performance
+      await Promise.all(
+        filesToAnalyze.map(async (file) => {
+          try {
+            const fullContent = await file.fileObject.async("string");
+            const headerContent = fullContent
+              .split("\n")
+              .slice(0, 10)
+              .join("\n");
+            const identifiedSoftware = await identifyFileType(headerContent);
+            setFileSoftware(file.name, identifiedSoftware || "None");
+          } catch (error) {
+            console.error(`Could not analyze file ${file.name}:`, error);
+            setFileSoftware(file.name, "None");
+          }
+          // This progress update is less accurate in parallel but much faster overall
+          analyzedCount++;
+          setProgress((analyzedCount / total) * 100);
+        }),
+      );
     };
 
-    if (files.some((f) => f.software === undefined)) {
+    // This check prevents the effect from running if there are no files to analyze
+    if (files.length > 0 && files.some((f) => f.software === undefined)) {
       analyzeFiles();
     }
-  }, [files, setFileSoftware, setProgress]);
+  }, [files, files.length, setFileSoftware, setProgress]);
 
   const aggregatedBadges = useMemo(() => {
     const stats: { [key: string]: { count: number; firstIndex: number } } = {};
@@ -152,7 +161,6 @@ function Workflow() {
     setProgress(0);
 
     for (const file of files) {
-      // Here we correctly use the FULL file content for processing.
       let content = await file.fileObject.async("string");
       if (file.software === "Altium" || file.software === "KiCad") {
         content = await addGerberHeader(content);
@@ -185,13 +193,16 @@ function Workflow() {
 
   const handleDownloadClick = async () => {
     if (!originalZipName || processedFiles.length === 0 || !primaryEda) return;
+
     const baseName = originalZipName.replace(/\.zip$/i, "");
     const edaSuffix = primaryEda === "Altium" ? "AD" : "Ki";
     const newZipName = `${baseName}-${edaSuffix}.zip`;
+
     const zip = new JSZip();
     processedFiles.forEach((file) => {
       zip.file(file.newName, file.content);
     });
+
     const blob = await zip.generateAsync({ type: "blob" });
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
@@ -203,6 +214,7 @@ function Workflow() {
   };
 
   return (
+    // --- LAYOUT FIX: md:grid-cols-2 (with a colon) ---
     <div className="w-full max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8">
       {/* Left Box */}
       <div className="relative">
@@ -274,9 +286,10 @@ function Workflow() {
           ) : (
             <div className="flex-1 flex items-center justify-center text-center">
               <p className="text-[var(--color-subtext)]">
-                {isProcessing
-                  ? "Processing files..."
-                  : "Processed files will appear here."}
+                {!isAnalysisComplete && files.length > 0 && !isProcessing
+                  ? "Analyzing files..."
+                  : ""}
+                {isProcessing ? "Processing files..." : ""}
               </p>
             </div>
           )}
