@@ -47,12 +47,8 @@ function UploadZone() {
         const gerberFiles: GerberFile[] = filesToProcess.map((entry) => ({
           name: entry.name.split("/").pop() || entry.name,
           fileObject: entry,
-        }));
-        console.log(
-          "Processed files:",
-          gerberFiles.map((f) => f.name),
-        );
-        setProcessState(gerberFiles);
+        }))
+        setProcessState(gerberFiles, file.name);
       } else {
         alert(
           "Invalid zip structure. Please ensure there are at least two Gerber files.",
