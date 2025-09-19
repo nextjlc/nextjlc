@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useWorkflowStore } from "./editfile";
-import { PackageSearch, Archive, LoaderCircle, Download } from "lucide-react";
+import { PackageSearch, Archive, LoaderCircle } from "lucide-react";
 import JSZip from "jszip";
 import {
   identifyFileType,
@@ -21,7 +21,6 @@ const HeaderBadge = ({
   count: number;
 }) => {
   if (!software || count === 0) return null;
-
   const styles = {
     Altium: {
       badge: "bg-red-500/80 text-white",
@@ -40,21 +39,19 @@ const HeaderBadge = ({
       count: "bg-gray-700 text-white",
     },
   };
-
   const selectedStyle = styles[software as keyof typeof styles] || styles.None;
-
   return (
     <span
       className={`relative ml-2 px-2 py-0.5 rounded-full text-xs font-medium ${selectedStyle.badge}`}
     >
-      {software}
+      {" "}
+      {software}{" "}
       <span
-        className={`absolute -top-1.5 -right-1.5 flex items-center justify-center
-                  w-4 h-4 rounded-full text-[10px] font-bold shadow
-                  ${selectedStyle.count}`}
+        className={`absolute -top-1.5 -right-1.5 flex items-center justify-center w-4 h-4 rounded-full text-[10px] font-bold shadow ${selectedStyle.count}`}
       >
-        {count}
-      </span>
+        {" "}
+        {count}{" "}
+      </span>{" "}
     </span>
   );
 };
@@ -69,35 +66,49 @@ function Workflow() {
     setProcessedFiles,
     originalZipName,
     primaryEda,
+    setProgress,
   } = useWorkflowStore();
 
   const [isAnalysisComplete, setIsAnalysisComplete] = useState(false);
 
+  // --- Phase 1: Analysis Progress ---
   useEffect(() => {
     const allFilesAnalyzed = files.every((f) => f.software !== undefined);
     if (allFilesAnalyzed) {
       setIsAnalysisComplete(true);
+      setTimeout(() => setProgress(0), 500);
       return;
     }
+
     const analyzeFiles = async () => {
       const filesToAnalyze = files.filter(
         (file) => file.software === undefined,
       );
+      const total = files.length;
+      let analyzedCount = total - filesToAnalyze.length;
+      setProgress((analyzedCount / total) * 100);
+
       for (const file of filesToAnalyze) {
         try {
-          const content = await file.fileObject.async("string");
-          const identifiedSoftware = await identifyFileType(content);
+          const fullContent = await file.fileObject.async("string");
+          const headerContent = fullContent.split("\n").slice(0, 10).join("\n");
+
+          // Pass only the header to the identification function.
+          const identifiedSoftware = await identifyFileType(headerContent);
           setFileSoftware(file.name, identifiedSoftware || "None");
         } catch (error) {
           console.error(`Could not analyze file ${file.name}:`, error);
           setFileSoftware(file.name, "None");
         }
+        analyzedCount++;
+        setProgress((analyzedCount / total) * 100);
       }
     };
+
     if (files.some((f) => f.software === undefined)) {
       analyzeFiles();
     }
-  }, [files, setFileSoftware]);
+  }, [files, setFileSoftware, setProgress]);
 
   const aggregatedBadges = useMemo(() => {
     const stats: { [key: string]: { count: number; firstIndex: number } } = {};
@@ -116,6 +127,7 @@ function Workflow() {
       .sort((a, b) => a.firstIndex - b.firstIndex);
   }, [files]);
 
+  // --- Phase 2: Processing Progress ---
   const handleProcessClick = async () => {
     startProcessing();
 
@@ -129,49 +141,57 @@ function Workflow() {
         `Processing is currently only supported for Altium and KiCad projects. The primary type detected was "${detectedPrimaryEda || "None"}".`,
       );
       setProcessedFiles([], "None");
+      setProgress(0);
       return;
     }
-
     const renameMap = await mapFilenames(originalFilenames, detectedPrimaryEda);
-    const newProcessedFiles = await Promise.all(
-      files.map(async (file) => {
-        let content = await file.fileObject.async("string");
-        if (file.software === "Altium" || file.software === "KiCad") {
-          content = await addGerberHeader(content);
-        }
-        if (file.software === "KiCad") {
-          content = await processDCodes(content);
-        }
-        if (
-          file.software === "Altium" ||
-          file.software === "KiCad" ||
-          file.software === "EasyEDA"
-        ) {
-          const isForeign = file.software !== "EasyEDA";
-          content = await addFingerprint(content, isForeign);
-        }
-        return {
-          originalName: file.name,
-          newName: renameMap.get(file.name) || file.name,
-          content: content,
-        };
-      }),
-    );
+
+    const newProcessedFiles = [];
+    const total = files.length;
+    let processedCount = 0;
+    setProgress(0);
+
+    for (const file of files) {
+      // Here we correctly use the FULL file content for processing.
+      let content = await file.fileObject.async("string");
+      if (file.software === "Altium" || file.software === "KiCad") {
+        content = await addGerberHeader(content);
+      }
+      if (file.software === "KiCad") {
+        content = await processDCodes(content);
+      }
+      if (
+        file.software === "Altium" ||
+        file.software === "KiCad" ||
+        file.software === "EasyEDA"
+      ) {
+        const isForeign = file.software !== "EasyEDA";
+        content = await addFingerprint(content, isForeign);
+      }
+
+      newProcessedFiles.push({
+        originalName: file.name,
+        newName: renameMap.get(file.name) || file.name,
+        content: content,
+      });
+
+      processedCount++;
+      setProgress((processedCount / total) * 100);
+    }
+
     setProcessedFiles(newProcessedFiles, detectedPrimaryEda);
+    setTimeout(() => setProgress(0), 500);
   };
 
   const handleDownloadClick = async () => {
     if (!originalZipName || processedFiles.length === 0 || !primaryEda) return;
-
     const baseName = originalZipName.replace(/\.zip$/i, "");
     const edaSuffix = primaryEda === "Altium" ? "AD" : "Ki";
     const newZipName = `${baseName}-${edaSuffix}.zip`;
-
     const zip = new JSZip();
     processedFiles.forEach((file) => {
       zip.file(file.newName, file.content);
     });
-
     const blob = await zip.generateAsync({ type: "blob" });
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
@@ -184,7 +204,7 @@ function Workflow() {
 
   return (
     <div className="w-full max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8">
-      {/* --- Left Box --- */}
+      {/* Left Box */}
       <div className="relative">
         <div className="flex justify-between items-center mb-2">
           <h2 className="text-lg font-semibold text-[var(--color-text)] flex items-center">
@@ -222,7 +242,7 @@ function Workflow() {
         </div>
       </div>
 
-      {/* --- Right Box --- */}
+      {/* Right Box */}
       <div className="relative">
         <div className="flex justify-between items-center mb-2">
           <h2 className="text-lg font-semibold text-[var(--color-text)] flex items-center">
@@ -232,9 +252,8 @@ function Workflow() {
           <button
             onClick={handleDownloadClick}
             disabled={processedFiles.length === 0 || isProcessing}
-            className="px-3 py-1 bg-green-600 text-white text-sm font-semibold rounded-md disabled:bg-gray-500 disabled:cursor-not-allowed hover:opacity-90 transition-opacity flex items-center gap-2"
+            className="px-3 py-1 bg-[var(--color-accent)] text-white text-sm font-semibold rounded-md disabled:bg-gray-500 disabled:cursor-not-allowed hover:opacity-90 transition-opacity flex items-center gap-2"
           >
-            <Download className="h-4 w-4" />
             Download
           </button>
         </div>
