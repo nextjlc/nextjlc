@@ -47,7 +47,7 @@ function UploadZone() {
         const gerberFiles: GerberFile[] = filesToProcess.map((entry) => ({
           name: entry.name.split("/").pop() || entry.name,
           fileObject: entry,
-        }))
+        }));
         setProcessState(gerberFiles, file.name);
       } else {
         alert(
