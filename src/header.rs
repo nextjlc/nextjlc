@@ -8,19 +8,15 @@
 use chrono::Local;
 use rand::Rng;
 
-/// This function prepends a dynamically generated Gerber header to the given content.
+/// This function generates and returns a dynamic Gerber header string.
 /// The header includes a randomly selected software name, a randomized version number,
-/// and the current timestamp. It also standardizes line endings to LF ('\n').
-///
-/// # Arguments
-///
-/// * `content` - A string slice (`&str`) representing the original file content.
+/// and the current timestamp. The returned string ends with a newline.
 ///
 /// # Returns
 ///
-/// A new `String` with the generated header prepended to the processed content.
-pub fn add_gerber_header(content: &str) -> String {
-    // Initialize a random number generator.
+/// A `String` containing the generated Gerber header.
+pub fn get_gerber_header() -> String {
+    // Initialize a thread-local random number generator.
     let mut rng = rand::rng();
 
     // Randomly choose between "EasyEDA Pro" and "EasyEDA".
@@ -40,17 +36,23 @@ pub fn add_gerber_header(content: &str) -> String {
     // Get the current local time.
     let now = Local::now();
 
-    // Format the final string.
-    // The header is added, and the original content's line endings are normalized to LF.
+    // Format the final header string.
+    // It no longer includes the original content, just the two header lines
+    // followed by a newline character to separate it from the actual content later.
     format!(
-        "G04 {} {}, {}*\nG04 Gerber Generator version 0.3*\n{}",
+        "G04 {} {}, {}*\nG04 Gerber Generator version 0.3*\n",
         name,
         version,
         now.format("%Y-%m-%d %H:%M:%S"),
-        content.replace("\r\n", "\n")
     )
 }
 
+/// This function provides a static help message that directs users to the
+/// official documentation for placing a PCB order.
+///
+/// # Returns
+///
+/// A static string slice (`&'static str`) containing the help text in Chinese.
 pub fn get_order_guide_text() -> &'static str {
     r#"如何进行PCB下单
 
