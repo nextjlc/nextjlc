@@ -31,8 +31,8 @@ pub fn add_fingerprint(gerber_content: &str, is_foreign_board_file: bool) -> Str
 
 #[cfg(target_arch = "wasm32")]
 #[wasm_bindgen]
-pub fn add_gerber_header(content: &str) -> String {
-    header::add_gerber_header(content)
+pub fn get_gerber_header() -> String {
+    header::get_gerber_header()
 }
 
 #[cfg(target_arch = "wasm32")]
