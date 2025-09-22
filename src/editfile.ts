@@ -25,6 +25,7 @@ interface WorkflowState {
   processedFiles: ProcessedGerberFile[];
   isProcessing: boolean;
   progress: number;
+  layerCount: number | null; // ADDED: To store the detected layer count.
 }
 
 interface WorkflowActions {
@@ -33,13 +34,12 @@ interface WorkflowActions {
   startProcessing: () => void;
   setProcessedFiles: (
     files: ProcessedGerberFile[],
-    primaryEda: SoftwareType,
+    primaryEda: SoftwareType | null,
+    layerCount: number | null, // MODIFIED: Accept layer count.
   ) => void;
   setProgress: (progress: number) => void;
   resetWorkflow: () => void;
-  // Action to copy or update a single file in the processed list.
   copyFileToProcessed: (file: ProcessedGerberFile) => void;
-  // Action to remove a single file from the processed list.
   removeFileFromProcessed: (originalName: string) => void;
 }
 
@@ -52,6 +52,7 @@ export const useWorkflowStore = create<WorkflowState & WorkflowActions>(
     originalZipName: null,
     primaryEda: null,
     progress: 0,
+    layerCount: null, // ADDED: Initial state.
     setProcessState: (files, originalName) =>
       set({
         workflowState: "process",
@@ -60,6 +61,7 @@ export const useWorkflowStore = create<WorkflowState & WorkflowActions>(
         processedFiles: [],
         primaryEda: null,
         progress: 0,
+        layerCount: null, // Ensure layerCount is reset on new file upload.
       }),
     resetWorkflow: () =>
       set({
@@ -69,6 +71,7 @@ export const useWorkflowStore = create<WorkflowState & WorkflowActions>(
         originalZipName: null,
         primaryEda: null,
         progress: 0,
+        layerCount: null, // Ensure layerCount is reset.
       }),
     setFileSoftware: (fileName, software) =>
       set((state) => ({
@@ -77,18 +80,22 @@ export const useWorkflowStore = create<WorkflowState & WorkflowActions>(
         ),
       })),
     startProcessing: () =>
-      set({ isProcessing: true, processedFiles: [], progress: 0 }),
-    setProcessedFiles: (files, primaryEda) =>
+      set({
+        isProcessing: true,
+        processedFiles: [],
+        progress: 0,
+        layerCount: null,
+      }),
+    // MODIFIED: This action now also sets the layer count.
+    setProcessedFiles: (files, primaryEda, layerCount) =>
       set({
         processedFiles: files,
         isProcessing: false,
         primaryEda: primaryEda,
+        layerCount: layerCount, // Set the layer count in the state.
       }),
     setProgress: (progress) => set({ progress }),
 
-    // Implementation for copying/updating a file.
-    // It checks if a file with the same *new* name already exists.
-    // If it does, it updates it (overwrite). If not, it adds it to the list.
     copyFileToProcessed: (fileToCopy) =>
       set((state) => {
         const existingIndex = state.processedFiles.findIndex(
@@ -96,18 +103,14 @@ export const useWorkflowStore = create<WorkflowState & WorkflowActions>(
         );
         let updatedFiles;
         if (existingIndex > -1) {
-          // File with same newName exists, replace it.
           updatedFiles = [...state.processedFiles];
           updatedFiles[existingIndex] = fileToCopy;
         } else {
-          // File does not exist, add it.
           updatedFiles = [...state.processedFiles, fileToCopy];
         }
         return { processedFiles: updatedFiles };
       }),
 
-    // Implementation for removing a file.
-    // It filters the list, keeping all files except the one matching the originalName.
     removeFileFromProcessed: (originalNameToRemove) =>
       set((state) => ({
         processedFiles: state.processedFiles.filter(
