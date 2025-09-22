@@ -1,6 +1,6 @@
 /* examples/add_header.rs */
 
-use nextjlc::header::add_gerber_header;
+use nextjlc::header::get_gerber_header;
 
 fn main() {
     // Define some sample Gerber content with mixed line endings (CRLF).
@@ -10,7 +10,7 @@ fn main() {
     println!("{}\n", original_content);
 
     // Call the function to add the header.
-    let content_with_header = add_gerber_header(original_content);
+    let content_with_header = get_gerber_header();
 
     println!("--- Content with Dynamic Header ---");
     // Print the full result, which includes the new header and the processed content.
