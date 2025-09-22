@@ -85,6 +85,8 @@ static KICAD_RULES: Lazy<Vec<Rule>> = Lazy::new(|| {
         rule("Drill_PTH_Through_Via_GBR", "(?i)^.*\\bVIA\\b.*\\.GBR$"),
         rule("Drill_NPTH_Through_GBR", "(?i)^.*\\bNPTH\\b.*\\.GBR$"),
         rule("Drill_PTH_Through_GBR", "(?i)^[^N]*PTH[^N]*\\.GBR$"),
+        // KiCAD match -drl_map.gbr
+        rule("Drill_MAP_GBR", "(?i).*?-drl_map$"),
     ]
 });
 
