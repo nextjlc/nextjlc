@@ -2,16 +2,21 @@
 
 import init, {
   identify_software,
-  add_gerber_header,
+  get_gerber_header, // MODIFIED: Renamed from add_gerber_header
   process_d_codes,
   add_fingerprint,
   sort_gerber_files,
   map_filenames_ad,
   map_filenames_kicad,
   get_order_guide_text,
+  validate_gerber_files,
+  type ValidationResult,
 } from "../pkg/nextjlc.js";
 
 export type SoftwareType = "Altium" | "KiCad" | "EasyEDA" | undefined;
+
+// This re-export makes the ValidationResult class available to other modules like workflow.tsx
+export type { ValidationResult };
 
 // This promise-based singleton ensures init() is only ever called once.
 let initPromise: Promise<void> | null = null;
@@ -37,9 +42,10 @@ export async function identifyFileType(
   return result as SoftwareType;
 }
 
-export async function addGerberHeader(content: string): Promise<string> {
+// MODIFIED: This function is now named getGerberHeader and takes no arguments.
+export async function getGerberHeader(): Promise<string> {
   await initializeWasm();
-  return add_gerber_header(content);
+  return get_gerber_header();
 }
 
 export async function processDCodes(gerberData: string): Promise<string> {
@@ -76,4 +82,12 @@ export async function mapFilenames(
 export async function getOrderGuideText(): Promise<string> {
   await initializeWasm();
   return get_order_guide_text();
+}
+
+// Wrapper for the file validation function.
+export async function validateGerberFiles(
+  files: string[],
+): Promise<ValidationResult> {
+  await initializeWasm();
+  return validate_gerber_files(files);
 }
