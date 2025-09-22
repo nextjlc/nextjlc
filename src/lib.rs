@@ -13,8 +13,16 @@ pub mod validation;
 
 #[cfg(target_arch = "wasm32")]
 #[wasm_bindgen]
-pub fn process_d_codes(gerber_data: String) -> String {
-    dcode::process_d_codes(gerber_data)
+pub fn process_d_codes(gerber_data: String, use_altium: bool) -> String {
+    use dcode::GerberFlavor;
+
+    let flavor = if use_altium {
+        GerberFlavor::Altium
+    } else {
+        GerberFlavor::KiCad
+    };
+
+    dcode::process_d_codes(gerber_data, flavor)
 }
 
 #[cfg(target_arch = "wasm32")]
