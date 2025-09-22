@@ -12,12 +12,14 @@ import {
 import JSZip from "jszip";
 import {
   identifyFileType,
-  addGerberHeader,
+  getGerberHeader,
   processDCodes,
   addFingerprint,
   sortGerberFiles,
   mapFilenames,
   getOrderGuideText,
+  validateGerberFiles,
+  type ValidationResult,
 } from "./filetype";
 import { HeaderBadge } from "./header-badge";
 import type { GerberFile, ProcessedGerberFile } from "./editfile";
@@ -35,19 +37,18 @@ function Workflow() {
     setProgress,
     copyFileToProcessed,
     removeFileFromProcessed,
+    layerCount,
   } = useWorkflowStore();
 
   const [isAnalysisComplete, setIsAnalysisComplete] = useState(false);
-  // State to hold the rename map after processing, so individual copy actions can use it.
   const [renameMap, setRenameMap] = useState<Map<string, string>>(new Map());
 
-  // --- Phase 1: Analysis Progress ---
+  // --- Phase 1: Analysis Progress (Unchanged) ---
   useEffect(() => {
-    // This effect remains unchanged.
     const allFilesAnalyzed = files.every((f) => f.software !== undefined);
     if (allFilesAnalyzed) {
       setIsAnalysisComplete(true);
-      setTimeout(() => setProgress(0), 500); // Hide bar after phase 1 is complete
+      setTimeout(() => setProgress(0), 500);
       return;
     }
 
@@ -85,7 +86,6 @@ function Workflow() {
   }, [files, files.length, setFileSoftware, setProgress]);
 
   const aggregatedBadges = useMemo(() => {
-    // This memo remains unchanged.
     const stats: { [key: string]: { count: number; firstIndex: number } } = {};
     files.forEach((file, index) => {
       const software = file.software;
@@ -104,6 +104,15 @@ function Workflow() {
 
   // --- Phase 2: Processing Progress ---
   const handleProcessClick = async () => {
+    // --- STRICT MODE GUARD ---
+    // This flag check is crucial. If the component re-renders while this async
+    // function is already running (a behavior React's Strict Mode can cause),
+    // this guard prevents the entire processing logic from running a second time.
+    if (isProcessing) {
+      return;
+    }
+    // --- END GUARD ---
+
     startProcessing();
 
     const originalFilenames = files.map((f) => f.name);
@@ -115,7 +124,7 @@ function Workflow() {
       alert(
         `Processing is currently only supported for Altium and KiCad projects. The primary type detected was "${detectedPrimaryEda || "None"}".`,
       );
-      setProcessedFiles([], "None");
+      setProcessedFiles([], null, null);
       setProgress(0);
       return;
     }
@@ -123,7 +132,9 @@ function Workflow() {
       originalFilenames,
       detectedPrimaryEda,
     );
-    setRenameMap(localRenameMap); // Save map for later use by copy actions
+    setRenameMap(localRenameMap);
+
+    const sharedHeader = await getGerberHeader();
 
     const newProcessedFiles = [];
     const total = files.length;
@@ -132,9 +143,12 @@ function Workflow() {
 
     for (const file of files) {
       let content = await file.fileObject.async("string");
+      content = content.replace(/\r\n/g, "\n");
+
       if (file.software === "Altium" || file.software === "KiCad") {
-        content = await addGerberHeader(content);
+        content = sharedHeader + content;
       }
+
       if (file.software === "KiCad") {
         content = await processDCodes(content);
       }
@@ -143,8 +157,7 @@ function Workflow() {
         file.software === "KiCad" ||
         file.software === "EasyEDA"
       ) {
-        const isForeign = file.software !== "EasyEDA";
-        content = await addFingerprint(content, isForeign);
+        content = await addFingerprint(content, false);
       }
 
       newProcessedFiles.push({
@@ -157,7 +170,24 @@ function Workflow() {
       setProgress((processedCount / total) * 100);
     }
 
-    // Get the guide text and add it as a new file to the processed list.
+    const finalFilenames = newProcessedFiles.map((f) => f.newName);
+    const validationResult: ValidationResult =
+      await validateGerberFiles(finalFilenames);
+
+    if (!validationResult.is_valid) {
+      const errorMessages = validationResult.errors.join("\n");
+      alert(`Gerber file validation failed:\n\n${errorMessages}`);
+      setProcessedFiles([], null, null);
+      setProgress(0);
+      validationResult.free();
+      return;
+    }
+
+    if (validationResult.warnings.length > 0) {
+      console.warn("Validation Warnings:");
+      validationResult.warnings.forEach((w) => console.warn(`- ${w}`));
+    }
+
     const guideContent = await getOrderGuideText();
     newProcessedFiles.push({
       originalName: "PCB下单必读.txt",
@@ -165,17 +195,28 @@ function Workflow() {
       content: guideContent,
     });
 
-    setProcessedFiles(newProcessedFiles, detectedPrimaryEda);
+    setProcessedFiles(
+      newProcessedFiles,
+      detectedPrimaryEda,
+      validationResult.layer_count,
+    );
+    validationResult.free();
     setTimeout(() => setProgress(0), 500);
   };
 
   const handleDownloadClick = async () => {
-    // This function remains unchanged.
-    if (!originalZipName || processedFiles.length === 0 || !primaryEda) return;
+    if (
+      !originalZipName ||
+      processedFiles.length === 0 ||
+      !primaryEda ||
+      layerCount === null
+    )
+      return;
 
     const baseName = originalZipName.replace(/\.zip$/i, "");
     const edaSuffix = primaryEda === "Altium" ? "AD" : "Ki";
-    const newZipName = `${baseName}-${edaSuffix}.zip`;
+    const layerSuffix = layerCount > 0 ? `-L${layerCount}` : "";
+    const newZipName = `${baseName}-${edaSuffix}${layerSuffix}.zip`;
 
     const zip = new JSZip();
     processedFiles.forEach((file) => {
@@ -192,7 +233,6 @@ function Workflow() {
     URL.revokeObjectURL(link.href);
   };
 
-  // Handler for the copy action on a file in the left panel.
   const handleCopyFile = async (file: GerberFile) => {
     try {
       const content = await file.fileObject.async("string");
@@ -200,7 +240,7 @@ function Workflow() {
       const processedFile: ProcessedGerberFile = {
         originalName: file.name,
         newName: newName,
-        content: content, // Note: This copies the *original* content, not the processed one.
+        content: content,
       };
       copyFileToProcessed(processedFile);
     } catch (error) {
@@ -214,7 +254,6 @@ function Workflow() {
       {/* Left Box */}
       <div className="relative">
         <div className="flex justify-between items-center mb-2">
-          {/* Header remains the same */}
           <h2 className="text-lg font-semibold text-[var(--color-text)] flex items-center">
             <PackageSearch className="h-5 w-5 mr-2" />
             Gerber Files
@@ -237,7 +276,6 @@ function Workflow() {
         <div className="p-4 border-2 border-dashed border-gray-500 rounded-lg h-96 flex flex-col">
           <ul className="flex-1 overflow-y-auto">
             {files.map((file) => (
-              // Added group class for hover effects.
               <li
                 key={file.name}
                 className="group px-3 py-0.5 rounded transition-colors hover:bg-[var(--color-bg-alt)] flex justify-between items-center"
@@ -245,12 +283,11 @@ function Workflow() {
                 <span className="text-sm text-[var(--color-text)] truncate">
                   {file.name}
                 </span>
-                {/* Arrow button that appears on hover. */}
                 <button
                   onClick={() => handleCopyFile(file)}
                   className="opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-[var(--color-accent)]"
                   title="Copy this file to the export list"
-                  disabled={processedFiles.length === 0} // Disable if not yet processed
+                  disabled={processedFiles.length === 0}
                 >
                   <ArrowRight className="h-4 w-4" />
                 </button>
@@ -263,7 +300,6 @@ function Workflow() {
       {/* Right Box */}
       <div className="relative">
         <div className="flex justify-between items-center mb-2">
-          {/* Header remains the same */}
           <h2 className="text-lg font-semibold text-[var(--color-text)] flex items-center">
             <Archive className="h-5 w-5 mr-2" />
             Export Preview
@@ -280,7 +316,6 @@ function Workflow() {
           {processedFiles.length > 0 ? (
             <ul className="flex-1 overflow-y-auto">
               {processedFiles.map((file) => (
-                // Added group class and flex for new icon.
                 <li
                   key={file.originalName}
                   className="group px-3 py-0.5 rounded transition-colors hover:bg-[var(--color-bg-alt)] flex justify-between items-center"
@@ -288,7 +323,6 @@ function Workflow() {
                   <span className="text-sm text-[var(--color-text)] truncate">
                     {file.newName}
                   </span>
-                  {/* Remove button that appears on hover. */}
                   <button
                     onClick={() => removeFileFromProcessed(file.originalName)}
                     className="opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-red-500"
