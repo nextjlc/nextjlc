@@ -42,9 +42,9 @@ static AD_RULES: Lazy<Vec<Rule>> = Lazy::new(|| {
         rule("Gerber_TopSolderMaskLayer", "(?i)\\.GTS$"),
         rule("Gerber_TopPasteMaskLayer", "(?i)\\.GTP$"),
         rule("Gerber_BottomLayer", "(?i)\\.GBL$"),
-        rule("Gerber_BottomSilkscreenLayer", "(?i)\\.GBP$"), // Note: Often GBO, but following spec.
+        rule("Gerber_BottomSilkscreenLayer", "(?i)\\.GBO$"),
         rule("Gerber_BottomSolderMaskLayer", "(?i)\\.GBS$"),
-        rule("Gerber_BottomPasteMaskLayer", "(?i)\\.GPB$"),
+        rule("Gerber_BottomPasteMaskLayer", "(?i)\\.GBP$"),
         rule("Gerber_InnerLayer1", "(?i)\\.G1$"),
         rule("Gerber_InnerLayer2", "(?i)\\.G2$"),
         rule("Gerber_InnerLayer3", "(?i)\\.G3$"),
@@ -56,6 +56,8 @@ static AD_RULES: Lazy<Vec<Rule>> = Lazy::new(|| {
         rule("Drill_PTH_Through_Via", "(?i)\\.REP$|.*via.*\\.txt$"),
         rule("Drill_PTH_Through_GBR", "(?i)\\.GD1$"),
         rule("Drill_PTH_Through_Via_GBR", "(?i)\\.GG1$"),
+        rule("Drill_Report", "(?i)\\.DRR$"),
+        rule("Gerber_Layer_Drawing_Parameters", "(?i)\\.LDP$"),
     ]
 });
 
@@ -114,6 +116,8 @@ fn get_final_filename(logical_name: &str) -> String {
         "Drill_NPTH_Through" => "Drill_NPTH_Through.DRL".to_string(),
         "Drill_MAP_GBR" => "Drill_MAP_GBR.GBR".to_string(),
         "Gerber_GBR_JOB" => "Gerber_GBR_JOB.GBRJOB".to_string(),
+        "Drill_Report" => "Drill_MAP_GBR.DRR".to_string(),
+        "Gerber_Layer_Drawing_Parameters" => "Gerber_GBR_JOB.LDP".to_string(),
 
         // A fallback for any other matched logical names not in the primary list.
         _ => format!("{}.GBR", logical_name),
