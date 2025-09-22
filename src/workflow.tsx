@@ -150,7 +150,9 @@ function Workflow() {
       }
 
       if (file.software === "KiCad") {
-        content = await processDCodes(content);
+        content = await processDCodes(content, false);
+      } else if (file.software === "Altium") {
+        content = await processDCodes(content, true);
       }
       if (
         file.software === "Altium" ||
