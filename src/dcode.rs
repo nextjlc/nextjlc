@@ -3,47 +3,76 @@
 /* SPDX-License-Identifier: Apache-2.0 */
 /*
  * Author HalfSweet <halfsweet@halfsweet.cn>
+ * Author Canmi <t@canmi.icu>
  */
 
 use once_cell::sync::Lazy;
 use regex::Regex;
 
-// This regex is simple and performant, matching any standard D-code.
-// It is used conditionally to avoid modifying lines that shouldn't be touched.
+// This regex matches any standard D-code (Dxx*).
 static DCODE_REGEX: Lazy<Regex> =
     Lazy::new(|| Regex::new(r"(D\d{2,4}\*)").expect("Failed to compile D-Code regex"));
 
-/// This function processes a string of Gerber data to prepend "G54"
-/// to specific D-codes, primarily for KiCad file compatibility.
+/// Gerber flavor for D-code processing
+pub enum GerberFlavor {
+    KiCad,
+    Altium,
+}
+
+/// Process Gerber data to prepend "G54" to D-codes according to the CAD flavor.
 ///
-/// It follows a safe and performant two-step process for each line:
-/// 1. It first checks for "%ADD" or "G54D" to quickly skip lines that
-///    should not be modified.
-/// 2. On all other lines, it uses a simple regex to find and replace
-///    all applicable D-codes.
-///
-/// This approach avoids complex regex features and ensures both correctness
-/// and speed, making it suitable for a WASM environment.
+/// KiCad: process all non-%ADD, non-G54D D-codes.
+/// Altium: skip D-codes on lines starting with G01/G02/G36/G37 with coordinates
+/// or lines that only contain a single Dxx*; other D-codes (including %ADD/%AM/G04) are processed.
 ///
 /// # Arguments
-///
-/// * `gerber_data` - A `String` containing the raw Gerber file content.
+/// * `gerber_data` - Raw Gerber file content
+/// * `flavor` - KiCad or Altium
 ///
 /// # Returns
-///
-/// A new `String` with the processed Gerber data where appropriate D-codes
-/// have been prefixed with "G54".
-pub fn process_d_codes(gerber_data: String) -> String {
+/// Processed Gerber content with appropriate D-codes prefixed with "G54"
+pub fn process_d_codes(gerber_data: String, flavor: GerberFlavor) -> String {
     let input_lines: Vec<&str> = gerber_data.split('\n').collect();
     let mut processed_lines = Vec::with_capacity(input_lines.len());
 
     for line in input_lines {
-        // This fast check ensures we only process relevant lines.
-        if line.contains("%ADD") || line.contains("G54D") {
+        let mut should_skip = false;
+
+        match flavor {
+            GerberFlavor::KiCad => {
+                if line.contains("%ADD") || line.contains("G54D") {
+                    should_skip = true;
+                }
+            }
+            GerberFlavor::Altium => {
+                // Skip if line already contains G54D
+                if line.contains("G54D") {
+                    should_skip = true;
+                }
+
+                // Skip lines starting with G01/G02/G36/G37 with coordinates or single Dxx*
+                if line.starts_with("G01")
+                    || line.starts_with("G02")
+                    || line.starts_with("G36")
+                    || line.starts_with("G37")
+                {
+                    let trimmed = line.trim();
+                    // Skip lines that are only Dxx* or contain coordinates
+                    if trimmed == "D01*"
+                        || trimmed == "D02*"
+                        || trimmed == "D03*"
+                        || trimmed.contains("X")
+                        || trimmed.contains("Y")
+                    {
+                        should_skip = true;
+                    }
+                }
+            }
+        }
+
+        if should_skip {
             processed_lines.push(line.to_string());
         } else {
-            // The simple regex is only run on lines that are safe to modify.
-            // `$1` refers to the captured D-code (e.g., "D10*").
             let modified_line = DCODE_REGEX.replace_all(line, "G54$1");
             processed_lines.push(modified_line.to_string());
         }
