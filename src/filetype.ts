@@ -8,6 +8,7 @@ import init, {
   sort_gerber_files,
   map_filenames_ad,
   map_filenames_kicad,
+  get_order_guide_text,
 } from "../pkg/nextjlc.js";
 
 export type SoftwareType = "Altium" | "KiCad" | "EasyEDA" | undefined;
@@ -69,4 +70,10 @@ export async function mapFilenames(
   } else {
     return map_filenames_kicad(files);
   }
+}
+
+// Wrapper function for getting the order guide text.
+export async function getOrderGuideText(): Promise<string> {
+  await initializeWasm();
+  return get_order_guide_text();
 }
