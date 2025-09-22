@@ -5,15 +5,25 @@
  * Author HalfSweet <halfsweet@halfsweet.cn>
  */
 
+use once_cell::sync::Lazy;
+use regex::Regex;
+
+/// Statically compile the regex for performance. It will be created only once.
+/// This regex looks for D-codes (D followed by 2-4 digits and a `*`) that are not
+/// preceded by "G54". Using a negative lookbehind `(?<!...)` is efficient here.
+/// Note: For this specific regex, the standard `regex` crate works perfectly.
+/// For more complex look-arounds, `fancy-regex` would be needed.
+static APERTURE_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new(r"(?<!G54)(D\d{2,4}\*)").unwrap());
+
 /// This function processes a string of Gerber data to prepend "G54"
-/// to specific D-codes.
+/// to specific D-codes, specifically for KiCad compatibility.
 ///
-/// It iterates through each line of the input data and searches for D-codes
-/// (e.g., D10*, D123*) that consist of 'D' followed by 2 to 4 digits and an asterisk.
+/// It iterates through each line and uses a regular expression to find all
+/// D-codes (e.g., D10*, D123*) that are not already prefixed with "G54".
 /// For each valid D-code found, it prepends "G54".
 ///
-/// The function skips any lines that already contain aperture definitions ("%ADD")
-/// or the "G54D" prefix to avoid redundant processing.
+/// The function skips any lines that contain aperture macro definitions ("%ADD")
+/// to avoid incorrect modifications.
 ///
 /// # Arguments
 ///
@@ -27,49 +37,18 @@ pub fn process_d_codes(gerber_data: String) -> String {
     let input_lines: Vec<&str> = gerber_data.split('\n').collect();
     let mut processed_lines = Vec::with_capacity(input_lines.len());
 
-    for current_line in input_lines {
-        // Skip lines that are already definitions or use G54D codes.
-        if current_line.contains("%ADD") || current_line.contains("G54D") {
-            processed_lines.push(current_line.to_string());
+    for line in input_lines {
+        // Skip lines that are macro definitions to prevent accidental replacement.
+        if line.contains("%ADD") {
+            processed_lines.push(line.to_string());
             continue;
         }
 
-        let mut updated_line = String::with_capacity(current_line.len() + 10);
-        let mut last_pos = 0;
-        let mut search_pos = 0;
-
-        // Manually search for D-codes like D10*, D123*, etc.
-        while let Some(d_pos) = current_line[search_pos..].find('D') {
-            let absolute_d_pos = search_pos + d_pos;
-            // Get the part of the string immediately after 'D'.
-            let suffix = &current_line[absolute_d_pos + 1..];
-            // Count how many digits follow 'D'.
-            let num_len = suffix.chars().take_while(|c| c.is_ascii_digit()).count();
-
-            // Check if the number has 2-4 digits and is followed by a '*'.
-            if (2..=4).contains(&num_len)
-                && suffix.len() > num_len
-                && suffix.as_bytes()[num_len] == b'*'
-            {
-                let end_of_match = absolute_d_pos + 1 + num_len + 1;
-                // Append content before the match.
-                updated_line.push_str(&current_line[last_pos..absolute_d_pos]);
-                // Prepend the required G54 prefix.
-                updated_line.push_str("G54");
-                // Append the original D-code.
-                updated_line.push_str(&current_line[absolute_d_pos..end_of_match]);
-                // Update positions for the next search.
-                last_pos = end_of_match;
-                search_pos = end_of_match;
-            } else {
-                // Move search position past the current 'D' if it's not a valid code.
-                search_pos = absolute_d_pos + 1;
-            }
-        }
-
-        // Append any remaining part of the line after the last match.
-        updated_line.push_str(&current_line[last_pos..]);
-        processed_lines.push(updated_line);
+        // Use `replace_all` to find all occurrences on the line that match the
+        // regex and prepend "G54" to them. The "$1" refers to the first capture group,
+        // which is the D-code itself (e.g., "D10*").
+        let modified_line = APERTURE_REGEX.replace_all(line, "G54$1");
+        processed_lines.push(modified_line.to_string());
     }
 
     // Join all processed lines back into a single string.
