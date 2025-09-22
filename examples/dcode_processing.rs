@@ -1,6 +1,6 @@
 /* examples/dcode_processing.rs */
 
-use nextjlc::dcode::process_d_codes;
+use nextjlc::dcode::{GerberFlavor, process_d_codes};
 
 fn main() {
     let gerber_sample = r#"
@@ -30,7 +30,7 @@ M02*"#;
     println!("{}\n", gerber_sample);
 
     // Process the Gerber data using the function.
-    let processed_data = process_d_codes(gerber_sample.to_string());
+    let processed_data = process_d_codes(gerber_sample.to_string(), GerberFlavor::KiCad);
 
     println!("--- Processed Gerber Data ---");
     println!("{}", processed_data);
