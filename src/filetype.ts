@@ -48,9 +48,12 @@ export async function getGerberHeader(): Promise<string> {
   return get_gerber_header();
 }
 
-export async function processDCodes(gerberData: string): Promise<string> {
+export async function processDCodes(
+  gerberData: string,
+  flag: boolean,
+): Promise<string> {
   await initializeWasm();
-  return process_d_codes(gerberData);
+  return process_d_codes(gerberData, flag);
 }
 
 export async function addFingerprint(
