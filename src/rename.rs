@@ -86,7 +86,8 @@ static KICAD_RULES: Lazy<Vec<Rule>> = Lazy::new(|| {
         rule("Drill_NPTH_Through_GBR", "(?i)^.*\\bNPTH\\b.*\\.GBR$"),
         rule("Drill_PTH_Through_GBR", "(?i)^[^N]*PTH[^N]*\\.GBR$"),
         // KiCAD match -drl_map.gbr
-        rule("Drill_MAP_GBR", "(?i).*?-drl_map$"),
+        rule("Drill_MAP_GBR", r"(?i).*[-_]drl_map(?:\.GBR)?$"),
+        rule("Gerber_GBR_JOB", "(?i)\\.gbrjob$"),
     ]
 });
 
@@ -111,8 +112,11 @@ fn get_final_filename(logical_name: &str) -> String {
         "Drill_PTH_Through" => "Drill_PTH_Through.DRL".to_string(),
         "Drill_PTH_Through_Via" => "Drill_PTH_Through_Via.DRL".to_string(),
         "Drill_NPTH_Through" => "Drill_NPTH_Through.DRL".to_string(),
+        "Drill_MAP_GBR" => "Drill_MAP_GBR.GBR".to_string(),
+        "Gerber_GBR_JOB" => "Gerber_GBR_JOB.GBRJOB".to_string(),
+
         // A fallback for any other matched logical names not in the primary list.
-        _ => format!("{}.gbr", logical_name),
+        _ => format!("{}.GBR", logical_name),
     }
 }
 
