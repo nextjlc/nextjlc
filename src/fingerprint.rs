@@ -6,221 +6,179 @@
  */
 
 use md5::{Digest, Md5};
-use rand::Rng;
 use regex::Regex;
+use std::collections::BTreeMap;
 
-/// This is the main public function that orchestrates the entire fingerprinting process.
-/// It takes raw Gerber content and a boolean flag, and returns the content with an
-/// embedded, unique fingerprint based on the file's own data.
-///
-/// The process involves:
-/// 1. Scanning for existing aperture definitions.
-/// 2. Selecting a random definition as a template.
-/// 3. Renumbering all subsequent apertures to create a space.
-/// 4. Generating a unique dimension based on an MD5 hash of the content.
-/// 5. Creating and inserting a new aperture definition line (the "fingerprint").
-///
-/// If the file has too few aperture definitions (less than 6), it cannot be fingerprinted
-/// and the original content is returned unchanged.
-///
-/// # Arguments
-///
-/// * `gerber_content` - A string slice (`&str`) of the entire Gerber file.
-/// * `is_foreign_board_file` - A boolean indicating if a special prefix should be used for hashing.
-///
-/// # Returns
-///
-/// A new `String` containing the fingerprinted Gerber content.
+/// The main public function for embedding a fingerprint aperture.
 pub fn add_fingerprint(gerber_content: &str, is_foreign_board_file: bool) -> String {
-    // If the file is very large, skip fingerprinting for performance reasons.
-    if gerber_content.len() > 30_000_000 {
-        return gerber_content.to_string();
+    // Normalize line endings and strip BOM to ensure consistent scanning.
+    let mut normalized = gerber_content.replace("\r\n", "\n");
+    normalized = normalized.trim_start_matches('\u{FEFF}').to_string();
+
+    if normalized.len() > 30_000_000 {
+        return normalized;
     }
 
-    let content_lines: Vec<&str> = gerber_content.lines().collect();
+    let (definitions, numbers) = scan_for_aperture_definitions(&normalized);
+    if definitions.len() < 5 {
+        return normalized;
+    }
 
-    // Part 1a: Scan for existing definitions.
-    let (existing_definitions, existing_aperture_ids) =
-        scan_for_aperture_definitions(&content_lines);
+    let (template, target_number, original_number) =
+        select_injection_template(&definitions, &numbers);
 
-    // Part 1b: Select a template for the new aperture.
-    // If there aren't enough apertures, this will gracefully select a default.
-    let (template_definition_line, injection_aperture_id) =
-        select_injection_template(&existing_definitions, &existing_aperture_ids);
+    let content_with_shifted_ids = renumber_apertures(&normalized, original_number);
 
-    // Part 2: Renumber apertures to make space.
-    let content_with_shifted_ids = renumber_apertures(gerber_content, injection_aperture_id);
-
-    // Part 3: Generate a unique dimension from a hash of the content.
     let final_dimension_str =
         generate_hashed_dimension(&content_with_shifted_ids, is_foreign_board_file);
 
-    // Part 4a: Create the new aperture definition line.
     let final_fingerprint_line = create_fingerprint_aperture_line(
-        template_definition_line,
-        injection_aperture_id,
+        &template,
+        target_number,
+        original_number,
         &final_dimension_str,
     );
 
-    // Part 4b: Insert the new line into the content.
-    insert_new_aperture_line(&content_with_shifted_ids, &final_fingerprint_line)
+    insert_new_aperture_line(
+        &content_with_shifted_ids,
+        &final_fingerprint_line,
+        target_number,
+    )
 }
 
-/// Part 1a: Scan the beginning of the file to find existing aperture definitions.
-fn scan_for_aperture_definitions(content_lines: &[&str]) -> (Vec<String>, Vec<u32>) {
-    let mut existing_definitions = Vec::new();
-    let mut existing_aperture_ids = Vec::new();
-    let aperture_regex = Regex::new(r"^%ADD(\d{2,4})\D.*").unwrap();
+fn scan_for_aperture_definitions(content: &str) -> (Vec<String>, Vec<u32>) {
+    let mut definitions = Vec::new();
+    let mut numbers = Vec::new();
+    let re = Regex::new(r"^%ADD(\d{2,4})\D.*").unwrap();
 
-    // Scan the top part of the file for efficiency.
-    for line in content_lines.iter().take(200) {
-        if let Some(caps) = aperture_regex.captures(line) {
-            if let Some(num_str) = caps.get(1) {
-                if let Ok(num) = num_str.as_str().parse::<u32>() {
-                    existing_definitions.push(line.to_string());
-                    existing_aperture_ids.push(num);
-                }
+    for line in content.lines().take(200) {
+        let line_trim = line.trim();
+        if let Some(caps) = re.captures(line_trim) {
+            if let Ok(num) = caps[1].parse::<u32>() {
+                definitions.push(line_trim.to_string());
+                numbers.push(num);
             }
         }
     }
-    (existing_definitions, existing_aperture_ids)
+    (definitions, numbers)
 }
 
-/// Part 1b: Choose a random existing aperture to use as a template.
-fn select_injection_template(
-    existing_definitions: &[String],
-    existing_aperture_ids: &[u32],
-) -> (Option<String>, u32) {
-    if existing_definitions.is_empty() {
-        return (None, 10); // Default if no apertures are found.
+/// Deterministic selection: group by numeric id then choose 6th smallest number.
+fn select_injection_template(definitions: &[String], numbers: &[u32]) -> (String, u32, u32) {
+    let mut map: BTreeMap<u32, Vec<String>> = BTreeMap::new();
+    for (num, def) in numbers.iter().copied().zip(definitions.iter().cloned()) {
+        map.entry(num).or_default().push(def);
     }
 
-    let mut rng = rand::rng();
-    let selection_index = if existing_definitions.len() <= 5 {
-        existing_definitions.len() - 1
+    let keys: Vec<u32> = map.keys().copied().collect();
+    let original_number = if keys.len() > 5 {
+        keys[5]
     } else {
-        // Choose a random index between 5 and the end of the list.
-        rng.random_range(5..existing_definitions.len())
+        *keys.last().unwrap()
     };
 
-    let template = existing_definitions.get(selection_index).cloned();
-    let injection_id = existing_aperture_ids
-        .get(selection_index)
-        .copied()
-        .unwrap_or(10);
+    // choose canonical template among candidates (lexicographically smallest)
+    let templates = map.get(&original_number).unwrap();
+    let template = templates.iter().min().unwrap().clone();
 
-    (template, injection_id)
+    let target_number = original_number; // keep same semantics as native implementation
+    (template, target_number, original_number)
 }
 
-/// Part 2: Renumber all subsequent apertures to make space for the new one.
-fn renumber_apertures(content: &str, injection_aperture_id: u32) -> String {
-    let re = Regex::new(r"(?m)^(%ADD|G54D)(\d{2,4})(.*)$").unwrap();
-    const MAX_APERTURE_NUM: u32 = 9999;
-
+fn renumber_apertures(content: &str, original_number: u32) -> String {
+    let re = Regex::new(r"(?m)^(%ADD|G54D)(\d{2,4})").unwrap();
     re.replace_all(content, |caps: &regex::Captures| {
         let prefix = &caps[1];
         let number: u32 = caps[2].parse().unwrap_or(0);
-        let suffix = &caps[3];
 
-        // Only renumber apertures at or after the injection point, and avoid overflowing the max number.
-        if number >= injection_aperture_id && number < MAX_APERTURE_NUM {
-            format!("{}{}{}", prefix, number + 1, suffix)
+        if number >= original_number {
+            format!("{}{}", prefix, number + 1)
         } else {
-            caps[0].to_string() // Return the original match if no change is needed.
+            caps[0].to_string()
         }
     })
     .to_string()
 }
 
-/// Part 3: Generate a "magic number" size based on a content hash.
-fn generate_hashed_dimension(
-    content_with_shifted_ids: &str,
-    is_foreign_board_file: bool,
-) -> String {
-    let data_to_hash = if is_foreign_board_file {
-        format!("494d{}", content_with_shifted_ids)
+fn generate_hashed_dimension(content: &str, is_foreign: bool) -> String {
+    let hash_content = if is_foreign {
+        format!("494d{}", content)
     } else {
-        content_with_shifted_ids.to_string()
+        content.to_string()
     };
 
-    let mut md5_hasher = Md5::new();
-    md5_hasher.update(data_to_hash.as_bytes());
-    let digest = md5_hasher.finalize();
-    let hex_digest = format!("{:x}", digest);
+    let mut hasher = Md5::new();
+    hasher.update(hash_content.as_bytes());
+    let hash_result = hasher.finalize();
+    let hash_hex = format!("{:x}", hash_result);
 
-    // Take the last two hex characters and convert to a number between 00 and 99.
-    let final_hex_chars = &hex_digest[hex_digest.len() - 2..];
-    let decimal_from_hash = u32::from_str_radix(final_hex_chars, 16).unwrap_or(0) % 100;
-    let hash_based_suffix = format!("{:02}", decimal_from_hash);
+    let last_two_hex = &hash_hex[hash_hex.len() - 2..];
+    let hash_number = u32::from_str_radix(last_two_hex, 16).unwrap_or(0) % 100;
+    let hash_suffix = format!("{:02}", hash_number);
 
-    let mut rng = rand::rng();
-    let random_base_dimension: f64 = rng.random_range(0.0..1.0);
-    let combined_dimension_str = format!("{:.2}{}", random_base_dimension, hash_based_suffix);
+    let base_size_int: u32 = 42;
+    let final_size_int = format!("{:02}{}", base_size_int, hash_suffix);
+    let final_str = format!("0.{}{}", &final_size_int[..2], &final_size_int[2..]);
 
-    // Ensure the final size is not zero.
-    if combined_dimension_str.parse::<f64>().unwrap_or(0.0) == 0.0 {
+    if final_str == "0.0000" {
         "0.0100".to_string()
     } else {
-        combined_dimension_str
+        final_str
     }
 }
 
-/// Part 4a: Create the new aperture definition line using the template.
 fn create_fingerprint_aperture_line(
-    template_definition_line: Option<String>,
-    injection_aperture_id: u32,
-    final_dimension_str: &str,
+    template: &str,
+    target_number: u32,
+    original_number: u32,
+    final_size: &str,
 ) -> String {
-    if let Some(template) = template_definition_line {
-        // Use regex to replace only the first size parameter after the comma.
-        let size_regex = Regex::new(r",([\d.]+)").unwrap();
-        let new_definition = size_regex
-            .replace(&template, |_: &regex::Captures| {
-                format!(",{}", final_dimension_str)
-            })
-            .to_string();
-
-        // Now, correctly replace the aperture number itself.
-        let id_regex = Regex::new(r"%ADD\d{2,4}").unwrap();
-        id_regex
-            .replace(&new_definition, &format!("%ADD{}", injection_aperture_id))
-            .to_string()
+    let size_re = Regex::new(r",([\d.]+)").unwrap();
+    let hash_aperture = if let Some(cap) = size_re.captures(template) {
+        let original_size_part = cap.get(0).unwrap().as_str();
+        let new_size_part = format!(",{}", final_size);
+        template.replace(original_size_part, &new_size_part)
     } else {
-        // If no template was available, create a default circular aperture.
-        format!("%ADD{}C,{}*%", injection_aperture_id, final_dimension_str)
-    }
+        format!("%ADD{}C,{}*%", target_number, final_size)
+    };
+
+    let id_re = Regex::new(&format!("ADD{}", original_number)).unwrap();
+    id_re
+        .replace(&hash_aperture, &format!("ADD{}", target_number))
+        .to_string()
 }
 
-/// Part 4b: Intelligently insert the new definition line into the file.
-fn insert_new_aperture_line(
-    content_with_shifted_ids: &str,
-    final_fingerprint_line: &str,
-) -> String {
-    let mut lines: Vec<String> = content_with_shifted_ids.lines().map(String::from).collect();
+fn insert_new_aperture_line(content: &str, fingerprint_line: &str, target_number: u32) -> String {
+    let mut result_lines: Vec<String> = Vec::new();
     let mut inserted = false;
-    let mut mo_section_found = false;
-    let mut insert_index = None;
+    let insertion_anchor = format!("%ADD{}", target_number - 1);
 
-    for (i, line) in lines.iter().enumerate() {
-        if !mo_section_found && line.starts_with("%MO") {
-            mo_section_found = true;
-        } else if mo_section_found && (line.starts_with("%LP") || line.starts_with('G')) {
-            // Found the ideal insertion point: right before the first drawing command
-            // after the unit/format section.
-            insert_index = Some(i);
-            break;
+    for line in content.split('\n') {
+        result_lines.push(line.to_string());
+        if line.starts_with(&insertion_anchor) {
+            result_lines.push(fingerprint_line.to_string());
+            inserted = true;
         }
     }
 
-    if let Some(index) = insert_index {
-        lines.insert(index, final_fingerprint_line.to_string());
-        inserted = true;
+    if inserted {
+        return result_lines.join("\n");
+    }
+
+    let mut final_lines: Vec<String> = Vec::new();
+    let mut mo_found = false;
+    for line in content.split('\n') {
+        if !mo_found && line.starts_with("%MO") {
+            mo_found = true;
+        } else if mo_found && !inserted && (line.starts_with("%LP") || line.starts_with('G')) {
+            final_lines.push(fingerprint_line.to_string());
+            inserted = true;
+        }
+        final_lines.push(line.to_string());
     }
 
     if !inserted {
-        // Fallback: if no suitable location is found, append it to the end.
-        lines.push(final_fingerprint_line.to_string());
+        final_lines.push(fingerprint_line.to_string());
     }
-
-    lines.join("\n")
+    final_lines.join("\n")
 }
