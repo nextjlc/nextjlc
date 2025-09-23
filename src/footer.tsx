@@ -15,7 +15,7 @@ function Footer() {
               rel="noopener noreferrer"
               className="hover:text-white hover:underline"
             >
-              NextJLC
+              NeXTJLC
             </a>
             .{" "}
             <a
@@ -87,7 +87,7 @@ function Footer() {
             rel="noopener noreferrer"
             className="hover:text-white hover:underline"
           >
-            NextJLC
+            NeXTJLC
           </a>
           .{" "}
           <a
