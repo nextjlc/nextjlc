@@ -43,7 +43,7 @@ function Workflow() {
   const [isAnalysisComplete, setIsAnalysisComplete] = useState(false);
   const [renameMap, setRenameMap] = useState<Map<string, string>>(new Map());
 
-  // --- Phase 1: Analysis Progress (Unchanged) ---
+  // Phase 1: Analysis Progress
   useEffect(() => {
     const allFilesAnalyzed = files.every((f) => f.software !== undefined);
     if (allFilesAnalyzed) {
@@ -102,16 +102,13 @@ function Workflow() {
       .sort((a, b) => a.firstIndex - b.firstIndex);
   }, [files]);
 
-  // --- Phase 2: Processing Progress ---
+  // Phase 2: Processing Progress
   const handleProcessClick = async () => {
-    // --- STRICT MODE GUARD ---
-    // This flag check is crucial. If the component re-renders while this async
-    // function is already running (a behavior React's Strict Mode can cause),
-    // this guard prevents the entire processing logic from running a second time.
+    // Strict mode guard - prevents duplicate execution if component re-renders
+    // while this async function is already running
     if (isProcessing) {
       return;
     }
-    // --- END GUARD ---
 
     startProcessing();
 
@@ -120,18 +117,24 @@ function Workflow() {
     const primaryFile = files.find((f) => f.name === sortedFilenames[0]);
     const detectedPrimaryEda = primaryFile?.software;
 
-    if (detectedPrimaryEda !== "Altium" && detectedPrimaryEda !== "KiCad") {
+    // Support Altium, KiCad and EasyEDA
+    if (
+      detectedPrimaryEda !== "Altium" &&
+      detectedPrimaryEda !== "KiCad" &&
+      detectedPrimaryEda !== "EasyEDA"
+    ) {
       alert(
-        `Processing is currently only supported for Altium and KiCad projects. The primary type detected was "${detectedPrimaryEda || "None"}".`,
+        `Processing is currently only supported for Altium, KiCad, and EasyEDA projects. The primary type detected was "${detectedPrimaryEda || "None"}".`,
       );
       setProcessedFiles([], null, null);
       setProgress(0);
       return;
     }
-    const localRenameMap = await mapFilenames(
-      originalFilenames,
-      detectedPrimaryEda,
-    );
+
+    // For EasyEDA, use Altium's processing method for filename mapping
+    const edaForMapping =
+      detectedPrimaryEda === "EasyEDA" ? "Altium" : detectedPrimaryEda;
+    const localRenameMap = await mapFilenames(originalFilenames, edaForMapping);
     setRenameMap(localRenameMap);
 
     const sharedHeader = await getGerberHeader();
@@ -145,15 +148,21 @@ function Workflow() {
       let content = await file.fileObject.async("string");
       content = content.replace(/\r\n/g, "\n");
 
-      if (file.software === "Altium" || file.software === "KiCad") {
+      if (
+        file.software === "Altium" ||
+        file.software === "KiCad" ||
+        file.software === "EasyEDA"
+      ) {
         content = sharedHeader + content;
       }
 
       if (file.software === "KiCad") {
         content = await processDCodes(content, false);
-      } else if (file.software === "Altium") {
+      } else if (file.software === "Altium" || file.software === "EasyEDA") {
+        // EasyEDA uses Altium's DCodes processing method
         content = await processDCodes(content, true);
       }
+
       if (
         file.software === "Altium" ||
         file.software === "KiCad" ||
@@ -190,12 +199,20 @@ function Workflow() {
       validationResult.warnings.forEach((w) => console.warn(`- ${w}`));
     }
 
-    const guideContent = await getOrderGuideText();
-    newProcessedFiles.push({
-      originalName: "PCB下单必读.txt",
-      newName: "PCB下单必读.txt",
-      content: guideContent,
-    });
+    // Check if the guide file already exists in the processed files
+    const guideFileName = "PCB下单必读.txt";
+    const hasGuideFile = newProcessedFiles.some(
+      (file) => file.newName === guideFileName,
+    );
+
+    if (!hasGuideFile) {
+      const guideContent = await getOrderGuideText();
+      newProcessedFiles.push({
+        originalName: guideFileName,
+        newName: guideFileName,
+        content: guideContent,
+      });
+    }
 
     setProcessedFiles(
       newProcessedFiles,
@@ -216,7 +233,15 @@ function Workflow() {
       return;
 
     const baseName = originalZipName.replace(/\.zip$/i, "");
-    const edaSuffix = primaryEda === "Altium" ? "AD" : "Ki";
+    let edaSuffix = "";
+    if (primaryEda === "Altium") {
+      edaSuffix = "AD";
+    } else if (primaryEda === "KiCad") {
+      edaSuffix = "Ki";
+    } else if (primaryEda === "EasyEDA") {
+      edaSuffix = "ED";
+    }
+
     const layerSuffix = layerCount > 0 ? `-L${layerCount}` : "";
     const newZipName = `${baseName}-${edaSuffix}${layerSuffix}.zip`;
 
