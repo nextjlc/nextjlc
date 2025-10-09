@@ -13,7 +13,7 @@ PS: `可能会不定期更换域名` Star 本仓库防丢，右上角会更新�
 
 **低调使用**
 
-<img src="https://raw.githubusercontent.com/nextjlc/nextjlc/refs/heads/main/img/qrcode.png" alt="sponsor" width="80" height="80">
+<img src="https://raw.githubusercontent.com/nextjlc/nextjlc/refs/heads/main/img/qrcode.png" alt="sponsor">
 
 `如果窝帮助到你的话可以支持一下窝养域名的服务器`
 
