@@ -1,5 +1,4 @@
-/* pkg/nextjlc.d.ts */
-
+/* tslint:disable */
 /* eslint-disable */
 export function process_d_codes(
   gerber_data: string,

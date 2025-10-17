@@ -13,8 +13,6 @@ PS: `可能会不定期更换域名` Star 本仓库防丢，右上角会更新�
 
 低版本AD(9左右)以下请先导入 JLCEDA Pro 升级 Gerber 编码格式后导出再使用本工具处理
 
-脚本处理后的文件`立创小助手`可识别，其他CAM软件解析错误属于 **正常现象** 因为现版本修改涉及到了 Gerber 文件本身，而不是早期版本的修改头文件注释
-
 **低调使用**
 
 <img src="https://raw.githubusercontent.com/nextjlc/nextjlc/refs/heads/main/img/qrcode.png" alt="sponsor" width="330">

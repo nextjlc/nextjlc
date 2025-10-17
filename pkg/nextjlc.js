@@ -1,5 +1,3 @@
-/* pkg/nextjlc.js */
-
 let wasm;
 
 let cachedUint8ArrayMemory0 = null;
