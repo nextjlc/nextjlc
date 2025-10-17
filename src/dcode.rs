@@ -4,6 +4,7 @@
 /*
  * Author HalfSweet <halfsweet@halfsweet.cn>
  * Author Canmi <t@canmi.icu>
+ * Author CharlieYu <charlieyu4994@charlie.moe>
  */
 
 use once_cell::sync::Lazy;
@@ -11,7 +12,7 @@ use regex::Regex;
 
 // This regex matches any standard D-code (Dxx*).
 static DCODE_REGEX: Lazy<Regex> =
-    Lazy::new(|| Regex::new(r"(D\d{2,4}\*)").expect("Failed to compile D-Code regex"));
+    Lazy::new(|| Regex::new(r"^(D\d{2,4}\*)").expect("Failed to compile D-Code regex"));
 
 /// Gerber flavor for D-code processing
 pub enum GerberFlavor {
