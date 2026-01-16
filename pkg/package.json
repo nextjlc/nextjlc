@@ -1,0 +1,32 @@
+{
+  "name": "nextjlc-core",
+  "type": "module",
+  "collaborators": [
+    "Canmi <t@canmi.icu>",
+    "HalfSweet <halfsweet@halfsweet.cn>",
+    "Acha <acha@acha666.cn>"
+  ],
+  "description": "A powerful library to convert and streamline Gerber file preparation for JLC.",
+  "version": "0.2.13",
+  "license": "SEE LICENSE IN LICENSE",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nextjlc/core"
+  },
+  "files": [
+    "nextjlc_bg.wasm",
+    "nextjlc.js",
+    "nextjlc.d.ts"
+  ],
+  "main": "nextjlc.js",
+  "types": "nextjlc.d.ts",
+  "sideEffects": [
+    "./snippets/*"
+  ],
+  "keywords": [
+    "fuckjlc",
+    "transjlc",
+    "openjlc",
+    "nextjlc"
+  ]
+}

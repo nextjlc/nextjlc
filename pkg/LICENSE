@@ -1,0 +1,13 @@
+This project is licensed under multiple open-source licenses. Each source file specifies its own license via an SPDX-License-Identifier in the header comments at the top of the file. For detailed terms, refer to the individual file headers and the corresponding license texts in the LICENSES/ directory.
+
+Summary of licenses used:
+- Apache-2.0: See LICENSES/Apache-2.0 for the full Apache License 2.0 text.
+- MIT: See LICENSES/MIT for the full MIT License text.
+- Public Domain: See LICENSES/PUBLICDOMAIN for the dedication to the public domain (e.g., via CC0 or equivalent).
+
+To determine the license for a specific file, check the SPDX-License-Identifier comment near the beginning of the source code. For example:
+- Files like src/dcode.rs are under Apache-2.0.
+- Files like src/header.rs are dedicated to the Public Domain.
+- Files like src/rename.rs are under MIT.
+
+If a file does not specify a license, it defaults to the terms outlined in this LICENSE file, but all provided source files include explicit identifiers.
