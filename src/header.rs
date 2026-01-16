@@ -8,42 +8,61 @@
 use chrono::Local;
 use rand::Rng;
 
-/// This function generates and returns a dynamic Gerber header string.
-/// The header includes a randomly selected software name, a randomized version number,
-/// and the current timestamp. The returned string ends with a newline.
-///
-/// # Returns
-///
-/// A `String` containing the generated Gerber header.
-pub fn get_gerber_header() -> String {
-    // Initialize a thread-local random number generator.
+/// Internal struct holding the generated header components.
+struct HeaderInfo {
+    software_name: String,
+    version: String,
+    timestamp: String,
+}
+
+/// Core function that generates randomized header information.
+/// This is shared between Gerber and Excellon header generators.
+fn generate_header_info() -> HeaderInfo {
     let mut rng = rand::rng();
 
-    // Randomly choose between "EasyEDA Pro" and "EasyEDA".
-    let name = if rng.random_bool(0.5) {
-        "EasyEDA Pro"
+    let software_name = if rng.random_bool(0.5) {
+        "EasyEDA Pro".to_string()
     } else {
-        "EasyEDA"
+        "EasyEDA".to_string()
     };
 
-    // Generate random numbers for the version string.
     let major = rng.random_range(2..=3);
     let minor = rng.random_range(1..=5);
     let patch = rng.random_range(1..=42);
     let build = rng.random_range(0..=2);
     let version = format!("v{}.{}.{}.{}", major, minor, patch, build);
 
-    // Get the current local time.
     let now = Local::now();
+    let timestamp = now.format("%Y-%m-%d %H:%M:%S").to_string();
 
-    // Format the final header string.
-    // It no longer includes the original content, just the two header lines
-    // followed by a newline character to separate it from the actual content later.
+    HeaderInfo {
+        software_name,
+        version,
+        timestamp,
+    }
+}
+
+/// Generates a dynamic Gerber header string with G04 comment format.
+/// Used for Gerber files (.GTL, .GBL, .GTO, etc.)
+pub fn get_gerber_header() -> String {
+    let info = generate_header_info();
     format!(
         "G04 {} {}, {}*\nG04 Gerber Generator version 0.3*\n",
-        name,
-        version,
-        now.format("%Y-%m-%d %H:%M:%S"),
+        info.software_name, info.version, info.timestamp,
+    )
+}
+
+/// Generates a dynamic Excellon drill header string with semicolon comment format.
+/// Used for drill files (.DRL, .TXT)
+///
+/// # Arguments
+/// * `hole_type` - "PLATED" or "NON_PLATED"
+/// * `layer_name` - Layer name like "PTH_Through" or "NPTH_Through"
+pub fn get_drill_header(hole_type: &str, layer_name: &str) -> String {
+    let info = generate_header_info();
+    format!(
+        ";TYPE={}\n;Layer: {}\n;{} {}, {}\n;Gerber Generator version 0.3\n",
+        hole_type, layer_name, info.software_name, info.version, info.timestamp,
     )
 }
 
