@@ -33,6 +33,8 @@ fn rule(logical_name: &'static str, pattern_str: &'static str) -> Rule {
 }
 
 /// Static list of rules for Altium Designer, initialized lazily and only once.
+/// Note: Drill files (.TXT, .TX1, etc.) are now handled by drill.rs module,
+/// so they are marked as "Drill_Source" for identification only.
 static AD_RULES: Lazy<Vec<Rule>> = Lazy::new(|| {
     vec![
         rule("Gerber_BoardOutlineLayer", "(?i)\\.GM(1|13)$"),
@@ -51,9 +53,9 @@ static AD_RULES: Lazy<Vec<Rule>> = Lazy::new(|| {
         rule("Gerber_InnerLayer4", "(?i)\\.G4$"),
         rule("Gerber_InnerLayer5", "(?i)\\.G5$"),
         rule("Gerber_InnerLayer6", "(?i)\\.G6$"),
-        rule("Drill_NPTH_Through", "(?i).*slot\\s?h?oles.*\\.txt$"),
-        rule("Drill_PTH_Through", "(?i).*round\\s?h?oles.*\\.txt$"),
-        rule("Drill_PTH_Through_Via", "(?i)\\.REP$|.*via.*\\.txt$"),
+        // Drill files - marked for identification, processed by drill.rs
+        rule("Drill_Source", "(?i).*holes?.*\\.txt$"),
+        rule("Drill_Source", "(?i)\\.tx[1-9]$"),
         rule("Drill_PTH_Through_GBR", "(?i)\\.GD1$"),
         rule("Drill_PTH_Through_Via_GBR", "(?i)\\.GG1$"),
         rule("Drill_Report", "(?i)\\.DRR$"),
@@ -62,6 +64,8 @@ static AD_RULES: Lazy<Vec<Rule>> = Lazy::new(|| {
 });
 
 /// Static list of rules for KiCad, initialized lazily and only once.
+/// Note: Drill files (.DRL) are now handled by drill.rs module,
+/// so they are marked as "Drill_Source" for identification only.
 static KICAD_RULES: Lazy<Vec<Rule>> = Lazy::new(|| {
     vec![
         rule("Gerber_BoardOutlineLayer", "(?i).*Edge_Cuts.*"),
@@ -80,14 +84,9 @@ static KICAD_RULES: Lazy<Vec<Rule>> = Lazy::new(|| {
         rule("Gerber_InnerLayer4", "(?i).*In4_Cu.*"),
         rule("Gerber_InnerLayer5", "(?i).*In5_Cu.*"),
         rule("Gerber_InnerLayer6", "(?i).*In6_Cu.*"),
-        // Drill rules are ordered from most to least specific.
-        rule("Drill_PTH_Through_Via", "(?i)^.*\\bVIA\\b.*\\.DRL$"),
-        rule("Drill_NPTH_Through", "(?i)^.*\\bNPTH\\b.*\\.DRL$"),
-        rule("Drill_PTH_Through", "(?i)^(?!.*NPTH).*\\.DRL$"), // Matches .DRL if not NPTH
-        rule("Drill_PTH_Through_Via_GBR", "(?i)^.*\\bVIA\\b.*\\.GBR$"),
-        rule("Drill_NPTH_Through_GBR", "(?i)^.*\\bNPTH\\b.*\\.GBR$"),
-        rule("Drill_PTH_Through_GBR", "(?i)^[^N]*PTH[^N]*\\.GBR$"),
-        // KiCAD match -drl_map.gbr
+        // Drill files - marked for identification, processed by drill.rs
+        rule("Drill_Source", "(?i)\\.DRL$"),
+        // Drill map GBR files (not processed, just identified)
         rule("Drill_MAP_GBR", r"(?i).*[-_]drl_map(?:\.GBR)?$"),
         rule("Gerber_GBR_JOB", "(?i)\\.gbrjob$"),
     ]
@@ -114,6 +113,8 @@ fn get_final_filename(logical_name: &str) -> String {
         "Drill_PTH_Through" => "Drill_PTH_Through.DRL".to_string(),
         "Drill_PTH_Through_Via" => "Drill_PTH_Through_Via.DRL".to_string(),
         "Drill_NPTH_Through" => "Drill_NPTH_Through.DRL".to_string(),
+        // Drill_Source files are processed by drill.rs, this is a fallback
+        "Drill_Source" => "Drill_Source.DRL".to_string(),
         "Drill_MAP_GBR" => "Drill_MAP_GBR.GBR".to_string(),
         "Gerber_GBR_JOB" => "Gerber_GBR_JOB.GBRJOB".to_string(),
         "Drill_Report" => "Drill_MAP_GBR.DRR".to_string(),
