@@ -4,6 +4,7 @@
 use wasm_bindgen::prelude::*;
 
 pub mod dcode;
+pub mod drill;
 pub mod file_type;
 pub mod fingerprint;
 pub mod header;
@@ -117,4 +118,64 @@ pub fn validate_gerber_files(files: Vec<String>) -> ValidationResult {
             errors,
         },
     }
+}
+
+#[cfg(target_arch = "wasm32")]
+#[wasm_bindgen]
+pub struct DrillProcessResult {
+    pth_content: Option<String>,
+    npth_content: Option<String>,
+    warnings: Vec<String>,
+}
+
+#[cfg(target_arch = "wasm32")]
+#[wasm_bindgen]
+impl DrillProcessResult {
+    #[wasm_bindgen(getter)]
+    pub fn pth_content(&self) -> Option<String> {
+        self.pth_content.clone()
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn npth_content(&self) -> Option<String> {
+        self.npth_content.clone()
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn warnings(&self) -> Vec<String> {
+        self.warnings.clone()
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn has_pth(&self) -> bool {
+        self.pth_content.is_some()
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn has_npth(&self) -> bool {
+        self.npth_content.is_some()
+    }
+}
+
+#[cfg(target_arch = "wasm32")]
+#[wasm_bindgen]
+pub fn process_drill_files(contents: Vec<String>, filenames: Vec<String>) -> DrillProcessResult {
+    let result = drill::process_drill_files(&contents, &filenames);
+    DrillProcessResult {
+        pth_content: result.pth_content,
+        npth_content: result.npth_content,
+        warnings: result.warnings,
+    }
+}
+
+#[cfg(target_arch = "wasm32")]
+#[wasm_bindgen]
+pub fn is_drill_file(filename: &str) -> bool {
+    drill::is_drill_file(filename)
+}
+
+#[cfg(target_arch = "wasm32")]
+#[wasm_bindgen]
+pub fn is_through_drill(filename: &str) -> bool {
+    drill::is_through_drill(filename)
 }
