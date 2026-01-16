@@ -340,7 +340,7 @@ function Workflow() {
       {/* Left Box */}
       <div className="relative">
         <div className="flex justify-between items-center mb-2">
-          <h2 className="text-lg font-semibold text-[var(--color-text)] flex items-center">
+          <h2 className="text-lg font-semibold text-(--color-text) flex items-center">
             <PackageSearch className="h-5 w-5 mr-2" />
             Gerber Files
             {aggregatedBadges.map(({ software, count }) => (
@@ -350,7 +350,7 @@ function Workflow() {
           <button
             onClick={handleProcessClick}
             disabled={!isAnalysisComplete || isProcessing}
-            className="px-3 py-1 bg-[var(--color-accent)] text-white text-sm font-semibold rounded-md disabled:bg-gray-500 disabled:cursor-not-allowed hover:opacity-90 transition-opacity flex items-center gap-2"
+            className="px-3 py-1 bg-(--color-accent) text-white text-sm font-semibold rounded-md disabled:bg-gray-500 disabled:cursor-not-allowed hover:opacity-90 transition-opacity flex items-center gap-2"
           >
             {isProcessing ? (
               <LoaderCircle className="h-4 w-4 animate-spin" />
@@ -364,14 +364,14 @@ function Workflow() {
             {files.map((file) => (
               <li
                 key={file.name}
-                className="group px-3 py-0.5 rounded transition-colors hover:bg-[var(--color-bg-alt)] flex justify-between items-center"
+                className="group px-3 py-0.5 rounded-sm transition-colors hover:bg-(--color-bg-alt) flex justify-between items-center"
               >
-                <span className="text-sm text-[var(--color-text)] truncate">
+                <span className="text-sm text-(--color-text) truncate">
                   {file.name}
                 </span>
                 <button
                   onClick={() => handleCopyFile(file)}
-                  className="opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-[var(--color-accent)]"
+                  className="opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-(--color-accent)"
                   title="Copy this file to the export list"
                   disabled={processedFiles.length === 0}
                 >
@@ -386,14 +386,14 @@ function Workflow() {
       {/* Right Box */}
       <div className="relative">
         <div className="flex justify-between items-center mb-2">
-          <h2 className="text-lg font-semibold text-[var(--color-text)] flex items-center">
+          <h2 className="text-lg font-semibold text-(--color-text) flex items-center">
             <Archive className="h-5 w-5 mr-2" />
             Export Preview
           </h2>
           <button
             onClick={handleDownloadClick}
             disabled={processedFiles.length === 0 || isProcessing}
-            className="px-3 py-1 bg-[var(--color-accent)] text-white text-sm font-semibold rounded-md disabled:bg-gray-500 disabled:cursor-not-allowed hover:opacity-90 transition-opacity flex items-center gap-2"
+            className="px-3 py-1 bg-(--color-accent) text-white text-sm font-semibold rounded-md disabled:bg-gray-500 disabled:cursor-not-allowed hover:opacity-90 transition-opacity flex items-center gap-2"
           >
             Download
           </button>
@@ -404,9 +404,9 @@ function Workflow() {
               {processedFiles.map((file) => (
                 <li
                   key={file.originalName}
-                  className="group px-3 py-0.5 rounded transition-colors hover:bg-[var(--color-bg-alt)] flex justify-between items-center"
+                  className="group px-3 py-0.5 rounded-sm transition-colors hover:bg-(--color-bg-alt) flex justify-between items-center"
                 >
-                  <span className="text-sm text-[var(--color-text)] truncate">
+                  <span className="text-sm text-(--color-text) truncate">
                     {file.newName}
                   </span>
                   <button
@@ -421,7 +421,7 @@ function Workflow() {
             </ul>
           ) : (
             <div className="flex-1 flex items-center justify-center text-center">
-              <p className="text-[var(--color-subtext)]">
+              <p className="text-(--color-subtext)">
                 {!isAnalysisComplete && files.length > 0 && !isProcessing
                   ? "Analyzing files..."
                   : ""}

@@ -101,8 +101,8 @@ function UploadZone() {
         transition-colors duration-200
         ${
           isDragging
-            ? "border-[var(--color-accent)] bg-[color:var(--color-accent)/0.1]"
-            : "border-gray-500 hover:border-[var(--color-accent)] hover:bg-[color:var(--color-accent)/0.1]"
+            ? "border-(--color-accent) bg-[var(--color-accent)/0.1]"
+            : "border-gray-500 hover:border-(--color-accent) hover:bg-[var(--color-accent)/0.1]"
         }
       `}
     >
@@ -114,12 +114,12 @@ function UploadZone() {
         accept=".zip"
       />
       <UploadCloud
-        className={`h-16 w-16 mb-4 ${isDragging ? "text-[var(--color-accent)]" : "text-gray-500"}`}
+        className={`h-16 w-16 mb-4 ${isDragging ? "text-(--color-accent)" : "text-gray-500"}`}
       />
-      <p className="text-lg font-semibold text-[var(--color-text)]">
+      <p className="text-lg font-semibold text-(--color-text)">
         Click to browse or drag & drop a file
       </p>
-      <p className="text-sm text-[var(--color-subtext)] mt-1">
+      <p className="text-sm text-(--color-subtext) mt-1">
         Only .zip Gerber files are accepted
       </p>
     </div>

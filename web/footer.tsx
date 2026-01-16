@@ -4,7 +4,7 @@ import { GitCommitVertical } from "lucide-react";
 
 function Footer() {
   return (
-    <footer className="bg-[var(--blue-color)] text-gray-200 px-8 py-4">
+    <footer className="bg-(--blue-color) text-gray-200 px-8 py-4">
       <div className="hidden md:flex items-center justify-between">
         <div className="flex flex-col gap-0">
           <div className="text-gray-400">
@@ -69,7 +69,7 @@ function Footer() {
             </a>
           </div>
           <a
-            href="https://github.com/nextjlc/core"
+            href="https://github.com/nextjlc/nextjlc"
             target="_blank"
             rel="noopener noreferrer"
             className="text-gray-400 hover:text-white hover:underline mt-1"

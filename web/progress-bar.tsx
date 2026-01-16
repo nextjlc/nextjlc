@@ -8,7 +8,7 @@ function ProgressBar() {
   return (
     <div className="w-full h-1 bg-transparent relative">
       <div
-        className="h-full bg-[var(--color-accent)] transition-all duration-300 ease-out"
+        className="h-full bg-(--color-accent) transition-all duration-300 ease-out"
         style={{
           width: `${progress}%`,
           // The bar is only visible when progress is actively happening
