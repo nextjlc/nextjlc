@@ -1,0 +1,16 @@
+[path_comment]
+enabled = true
+
+[path_comment.formats]
+".c" = "/* $path$file */"
+".css" = "/* $path$file */"
+".js" = "/* $path$file */"
+".mjs" = "/* $path$file */"
+".rs" = "/* $path$file */"
+".sh" = "# $path$file"
+".ts" = "/* $path$file */"
+".tsx" = "/* $path$file */"
+
+[path_comment.exclude]
+dirs = ["vite", "node_modules", "target"]
+patterns = []
