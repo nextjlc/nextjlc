@@ -1,0 +1,80 @@
+/* web/style.css */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-primary: #ececec;
+  --color-secondary: #ffffff;
+  --color-tertiary: #cfcfcf;
+  --color-bg: #161616;
+  --color-bg-alt: #232323;
+  --color-text: #ffffff;
+  --color-subtext: #a1a1a1;
+  --color-progress: var(--color-primary);
+  --scrollbar-track: #232323;
+  --scrollbar-thumb: #424242;
+  --scrollbar-thumb-hover: #555555;
+  --blue-color: #181828;
+  --color-accent: #594b81;
+}
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
+    "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei UI", "Microsoft YaHei",
+    "Source Han Sans SC", "Noto Sans CJK SC", sans-serif;
+}
+
+.site-footer {
+  --footer-border-color: color-mix(
+    in srgb,
+    var(--footer-background) 85%,
+    white
+  );
+  --footer-text-color: color-mix(
+    in srgb,
+    var(--color-primary) 85%,
+    var(--footer-background)
+  );
+  --footer-subtext-color: var(--color-subtext);
+}
+
+/* Scrollbar styles (webkit) */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: var(--scrollbar-thumb);
+  border-radius: 8px;
+  border: 2px solid var(--scrollbar-track);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--scrollbar-thumb-hover);
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
+/* Selection */
+::selection {
+  background-color: #3f5e5c;
+  color: #e5e7eb;
+}
+
+::-moz-selection {
+  background-color: #3f5e5c;
+  color: #e5e7eb;
+}
