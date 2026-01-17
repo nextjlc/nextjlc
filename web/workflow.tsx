@@ -44,6 +44,8 @@ function Workflow() {
 
   const [isAnalysisComplete, setIsAnalysisComplete] = useState(false);
   const [renameMap, setRenameMap] = useState<Map<string, string>>(new Map());
+  const [showSponsor, setShowSponsor] = useState(false);
+  const [savedAmount, setSavedAmount] = useState(0);
 
   // Phase 1: Analysis Progress
   useEffect(() => {
@@ -113,6 +115,14 @@ function Workflow() {
     }
 
     startProcessing();
+
+    // Increment conversion count
+    const storedTimes = localStorage.getItem("conversion_times");
+    let times = 1;
+    if (storedTimes) {
+      times = parseInt(storedTimes, 10) + 1;
+    }
+    localStorage.setItem("conversion_times", times.toString());
 
     const originalFilenames = files.map((f) => f.name);
     const sortedFilenames = await sortGerberFiles(originalFilenames);
@@ -317,6 +327,13 @@ function Workflow() {
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(link.href);
+
+    // Sponsor Logic
+    const storedTimes = localStorage.getItem("conversion_times");
+    const times = storedTimes ? parseInt(storedTimes, 10) : 1;
+
+    setSavedAmount(times * 20);
+    setShowSponsor(true);
   };
 
   const handleCopyFile = async (file: GerberFile) => {
@@ -436,6 +453,34 @@ function Workflow() {
           )}
         </div>
       </div>
+
+      {showSponsor && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-md"
+          onClick={() => setShowSponsor(false)}
+        >
+          <button
+            className="fixed top-8 right-8 text-white cursor-pointer z-60 hover:opacity-80 transition-opacity"
+            onClick={() => setShowSponsor(false)}
+          >
+            <X className="w-10 h-10" />
+          </button>
+
+          <div
+            className="relative max-w-sm w-full mx-4 bg-(--color-bg-alt) rounded-xl overflow-hidden shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="bg-(--color-accent) p-4 text-center text-(--color-text) font-bold text-xl">
+              NeXTJLC 已经帮你节省了 ¥{savedAmount}
+            </div>
+            <img
+              src="/sponsor.webp"
+              alt="Sponsor"
+              className="w-full h-auto block"
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
