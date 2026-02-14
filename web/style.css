@@ -16,24 +16,30 @@
   ::before,
   ::backdrop,
   ::file-selector-button {
-    border-color: var(--color-gray-200, currentcolor);
+    border-color: var(--color-border, currentcolor);
   }
 }
 
 :root {
-  --color-primary: #ececec;
-  --color-secondary: #ffffff;
-  --color-tertiary: #cfcfcf;
-  --color-bg: #161616;
-  --color-bg-alt: #232323;
-  --color-text: #ffffff;
-  --color-subtext: #a1a1a1;
-  --color-progress: var(--color-primary);
-  --scrollbar-track: #232323;
-  --scrollbar-thumb: #424242;
-  --scrollbar-thumb-hover: #555555;
-  --blue-color: #181828;
-  --color-accent: #594b81;
+  --color-bg: #1a1714;
+  --color-bg-alt: #231f1b;
+  --color-surface-tertiary: #302b25;
+  --color-input-bg: #1e1b17;
+
+  --color-text: #ede9e0;
+  --color-subtext: #a8a090;
+  --color-text-muted: #6b6459;
+
+  --color-accent: #c15f3c;
+  --color-accent-hover: #a8502f;
+  --color-accent-subtle: #2e2019;
+
+  --color-border: #3a3530;
+  --color-disabled: #4a4540;
+
+  --scrollbar-track: #231f1b;
+  --scrollbar-thumb: #4a4540;
+  --scrollbar-thumb-hover: #5a554e;
 }
 
 body {
@@ -46,16 +52,8 @@ body {
 }
 
 .site-footer {
-  --footer-border-color: color-mix(
-    in srgb,
-    var(--footer-background) 85%,
-    white
-  );
-  --footer-text-color: color-mix(
-    in srgb,
-    var(--color-primary) 85%,
-    var(--footer-background)
-  );
+  --footer-border-color: color-mix(in srgb, var(--color-bg-alt) 85%, white);
+  --footer-text-color: var(--color-text);
   --footer-subtext-color: var(--color-subtext);
 }
 
@@ -86,11 +84,11 @@ body {
 
 /* Selection */
 ::selection {
-  background-color: #3f5e5c;
-  color: #e5e7eb;
+  background-color: #2e2019;
+  color: #ede9e0;
 }
 
 ::-moz-selection {
-  background-color: #3f5e5c;
-  color: #e5e7eb;
+  background-color: #2e2019;
+  color: #ede9e0;
 }

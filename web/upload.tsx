@@ -101,8 +101,8 @@ function UploadZone() {
         transition-colors duration-200
         ${
           isDragging
-            ? "border-(--color-accent) bg-[var(--color-accent)/0.1]"
-            : "border-gray-500 hover:border-(--color-accent) hover:bg-[var(--color-accent)/0.1]"
+            ? "border-(--color-accent) bg-(--color-accent-subtle)"
+            : "border-(--color-border) hover:border-(--color-accent) hover:bg-(--color-accent-subtle)"
         }
       `}
     >
@@ -114,7 +114,7 @@ function UploadZone() {
         accept=".zip"
       />
       <UploadCloud
-        className={`h-16 w-16 mb-4 ${isDragging ? "text-(--color-accent)" : "text-gray-500"}`}
+        className={`h-16 w-16 mb-4 ${isDragging ? "text-(--color-accent)" : "text-(--color-text-muted)"}`}
       />
       <p className="text-lg font-semibold text-(--color-text)">
         Click to browse or drag & drop a file

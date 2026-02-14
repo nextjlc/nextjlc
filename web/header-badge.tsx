@@ -11,20 +11,20 @@ export const HeaderBadge = ({
 
   const styles = {
     Altium: {
-      badge: "bg-red-500/80 text-white",
-      count: "bg-red-700 text-white",
+      badge: "bg-red-600/80 text-white",
+      count: "bg-red-800 text-white",
     },
     KiCad: {
-      badge: "bg-blue-500/80 text-white",
-      count: "bg-blue-700 text-white",
+      badge: "bg-blue-600/80 text-white",
+      count: "bg-blue-800 text-white",
     },
     EasyEDA: {
-      badge: "bg-sky-400/80 text-white",
-      count: "bg-sky-600 text-white",
+      badge: "bg-sky-500/80 text-white",
+      count: "bg-sky-700 text-white",
     },
     None: {
-      badge: "bg-gray-500/80 text-white",
-      count: "bg-gray-700 text-white",
+      badge: "bg-[#4a4540] text-[#a8a090]",
+      count: "bg-[#3a3530] text-[#a8a090]",
     },
   };
 

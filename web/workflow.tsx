@@ -367,7 +367,7 @@ function Workflow() {
           <button
             onClick={handleProcessClick}
             disabled={!isAnalysisComplete || isProcessing}
-            className="px-3 py-1 bg-(--color-accent) text-white text-sm font-semibold rounded-md disabled:bg-gray-500 disabled:cursor-not-allowed hover:opacity-90 transition-opacity flex items-center gap-2"
+            className="px-3 py-1 bg-(--color-accent) text-white text-sm font-semibold rounded-md disabled:bg-(--color-disabled) disabled:cursor-not-allowed hover:bg-(--color-accent-hover) transition-colors flex items-center gap-2"
           >
             {isProcessing ? (
               <LoaderCircle className="h-4 w-4 animate-spin" />
@@ -376,19 +376,19 @@ function Workflow() {
             )}
           </button>
         </div>
-        <div className="p-4 border-2 border-dashed border-gray-500 rounded-lg h-96 flex flex-col">
+        <div className="p-4 border-2 border-dashed border-(--color-border) rounded-lg h-96 flex flex-col">
           <ul className="flex-1 overflow-y-auto">
             {files.map((file) => (
               <li
                 key={file.name}
-                className="group px-3 py-0.5 rounded-sm transition-colors hover:bg-(--color-bg-alt) flex justify-between items-center"
+                className="group px-3 py-0.5 rounded-sm transition-colors hover:bg-(--color-surface-tertiary) flex justify-between items-center"
               >
                 <span className="text-sm text-(--color-text) truncate">
                   {file.name}
                 </span>
                 <button
                   onClick={() => handleCopyFile(file)}
-                  className="opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-(--color-accent)"
+                  className="opacity-0 group-hover:opacity-100 transition-opacity text-(--color-subtext) hover:text-(--color-accent)"
                   title="Copy this file to the export list"
                   disabled={processedFiles.length === 0}
                 >
@@ -410,25 +410,25 @@ function Workflow() {
           <button
             onClick={handleDownloadClick}
             disabled={processedFiles.length === 0 || isProcessing}
-            className="px-3 py-1 bg-(--color-accent) text-white text-sm font-semibold rounded-md disabled:bg-gray-500 disabled:cursor-not-allowed hover:opacity-90 transition-opacity flex items-center gap-2"
+            className="px-3 py-1 bg-(--color-accent) text-white text-sm font-semibold rounded-md disabled:bg-(--color-disabled) disabled:cursor-not-allowed hover:bg-(--color-accent-hover) transition-colors flex items-center gap-2"
           >
             Download
           </button>
         </div>
-        <div className="p-4 border-2 border-dashed border-gray-500 rounded-lg h-96 flex flex-col">
+        <div className="p-4 border-2 border-dashed border-(--color-border) rounded-lg h-96 flex flex-col">
           {processedFiles.length > 0 ? (
             <ul className="flex-1 overflow-y-auto">
               {processedFiles.map((file) => (
                 <li
                   key={file.originalName}
-                  className="group px-3 py-0.5 rounded-sm transition-colors hover:bg-(--color-bg-alt) flex justify-between items-center"
+                  className="group px-3 py-0.5 rounded-sm transition-colors hover:bg-(--color-surface-tertiary) flex justify-between items-center"
                 >
                   <span className="text-sm text-(--color-text) truncate">
                     {file.newName}
                   </span>
                   <button
                     onClick={() => removeFileFromProcessed(file.originalName)}
-                    className="opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-red-500"
+                    className="opacity-0 group-hover:opacity-100 transition-opacity text-(--color-subtext) hover:text-red-500"
                     title="Remove this file from the export list"
                   >
                     <X className="h-4 w-4" />
