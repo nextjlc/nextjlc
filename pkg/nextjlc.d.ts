@@ -1,3 +1,5 @@
+/* pkg/nextjlc.d.ts */
+
 /* tslint:disable */
 /* eslint-disable */
 

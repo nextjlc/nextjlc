@@ -1,3 +1,5 @@
+/* pkg/nextjlc_bg.wasm.d.ts */
+
 /* tslint:disable */
 /* eslint-disable */
 export const memory: WebAssembly.Memory;

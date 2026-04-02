@@ -1,6 +1,6 @@
 /* web/style.css */
 
-@import "tailwindcss";
+@import 'tailwindcss';
 
 /*
   The default border color has changed to `currentcolor` in Tailwind CSS v4,
@@ -46,9 +46,9 @@ body {
   background-color: var(--color-bg);
   color: var(--color-text);
   font-family:
-    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
-    "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei UI", "Microsoft YaHei",
-    "Source Han Sans SC", "Noto Sans CJK SC", sans-serif;
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', 'PingFang SC',
+    'Hiragino Sans GB', 'Microsoft YaHei UI', 'Microsoft YaHei', 'Source Han Sans SC',
+    'Noto Sans CJK SC', sans-serif;
 }
 
 .site-footer {

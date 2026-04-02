@@ -1,14 +1,14 @@
 /* web/progress-bar.tsx */
 
-import { useWorkflowStore } from "./editfile";
+import { useWorkflowStore } from './editfile'
 
 function ProgressBar() {
-  const { progress } = useWorkflowStore();
+  const { progress } = useWorkflowStore()
 
   return (
-    <div className="w-full h-1 bg-transparent relative">
+    <div className='w-full h-1 bg-transparent relative'>
       <div
-        className="h-full bg-(--color-accent) transition-all duration-300 ease-out"
+        className='h-full bg-(--color-accent) transition-all duration-300 ease-out'
         style={{
           width: `${progress}%`,
           // The bar is only visible when progress is actively happening
@@ -16,7 +16,7 @@ function ProgressBar() {
         }}
       />
     </div>
-  );
+  )
 }
 
-export default ProgressBar;
+export default ProgressBar

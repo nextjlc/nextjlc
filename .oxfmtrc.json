@@ -1,0 +1,14 @@
+{
+  "$schema": "./node_modules/oxfmt/configuration_schema.json",
+  "semi": false,
+  "singleQuote": true,
+  "jsxSingleQuote": true,
+  "ignorePatterns": [
+    "dist/**",
+    "node_modules/**",
+    "target/**",
+    "pkg/nextjlc.js",
+    "pkg/nextjlc.d.ts",
+    "pkg/nextjlc_bg.wasm.d.ts"
+  ]
+}

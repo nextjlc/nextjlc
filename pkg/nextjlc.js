@@ -1,4 +1,4 @@
-/* @ts-self-types="./nextjlc.d.ts" */
+/* pkg/nextjlc.js */
 
 export class DrillProcessResult {
     static __wrap(ptr) {
@@ -306,7 +306,7 @@ export function validate_gerber_files(files) {
 function __wbg_get_imports() {
     const import0 = {
         __proto__: null,
-        __wbg___wbindgen_string_get_72fb696202c56729: function(arg0, arg1) {
+        __wbg___wbindgen_string_get_914df97fcfa788f2: function(arg0, arg1) {
             const obj = arg1;
             const ret = typeof(obj) === 'string' ? obj : undefined;
             var ptr1 = isLikeNone(ret) ? 0 : passStringToWasm0(ret, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
@@ -314,33 +314,33 @@ function __wbg_get_imports() {
             getDataViewMemory0().setInt32(arg0 + 4 * 1, len1, true);
             getDataViewMemory0().setInt32(arg0 + 4 * 0, ptr1, true);
         },
-        __wbg___wbindgen_throw_be289d5034ed271b: function(arg0, arg1) {
+        __wbg___wbindgen_throw_81fc77679af83bc6: function(arg0, arg1) {
             throw new Error(getStringFromWasm0(arg0, arg1));
         },
-        __wbg_getRandomValues_1c61fac11405ffdc: function() { return handleError(function (arg0, arg1) {
+        __wbg_getRandomValues_76dfc69825c9c552: function() { return handleError(function (arg0, arg1) {
             globalThis.crypto.getRandomValues(getArrayU8FromWasm0(arg0, arg1));
         }, arguments); },
-        __wbg_getTime_1e3cd1391c5c3995: function(arg0) {
+        __wbg_getTime_f6ac312467f7cf09: function(arg0) {
             const ret = arg0.getTime();
             return ret;
         },
-        __wbg_getTimezoneOffset_81776d10a4ec18a8: function(arg0) {
+        __wbg_getTimezoneOffset_ac5be603b21a5797: function(arg0) {
             const ret = arg0.getTimezoneOffset();
             return ret;
         },
-        __wbg_new_0_73afc35eb544e539: function() {
+        __wbg_new_0_bfa2ef4bc447daa2: function() {
             const ret = new Date();
             return ret;
         },
-        __wbg_new_245cd5c49157e602: function(arg0) {
+        __wbg_new_0f6d2ddfe083319b: function(arg0) {
             const ret = new Date(arg0);
             return ret;
         },
-        __wbg_new_dca287b076112a51: function() {
+        __wbg_new_99cabae501c0a8a0: function() {
             const ret = new Map();
             return ret;
         },
-        __wbg_set_1eb0999cf5d27fc8: function(arg0, arg1, arg2) {
+        __wbg_set_08463b1df38a7e29: function(arg0, arg1, arg2) {
             const ret = arg0.set(arg1, arg2);
             return ret;
         },

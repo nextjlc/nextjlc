@@ -110,7 +110,10 @@ fn generate_hashed_dimension(content: &str, is_foreign: bool) -> String {
     let mut hasher = Md5::new();
     hasher.update(hash_content.as_bytes());
     let hash_result = hasher.finalize();
-    let hash_hex = format!("{:x}", hash_result);
+    let hash_hex = hash_result
+        .iter()
+        .map(|byte| format!("{byte:02x}"))
+        .collect::<String>();
 
     let last_two_hex = &hash_hex[hash_hex.len() - 2..];
     let hash_number = u32::from_str_radix(last_two_hex, 16).unwrap_or(0) % 100;

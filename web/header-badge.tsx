@@ -1,34 +1,28 @@
 /* web/header-badge.tsx */
 
-export const HeaderBadge = ({
-  software,
-  count,
-}: {
-  software: string;
-  count: number;
-}) => {
-  if (!software || count === 0) return null;
+export const HeaderBadge = ({ software, count }: { software: string; count: number }) => {
+  if (!software || count === 0) return null
 
   const styles = {
     Altium: {
-      badge: "bg-red-600/80 text-white",
-      count: "bg-red-800 text-white",
+      badge: 'bg-red-600/80 text-white',
+      count: 'bg-red-800 text-white',
     },
     KiCad: {
-      badge: "bg-blue-600/80 text-white",
-      count: "bg-blue-800 text-white",
+      badge: 'bg-blue-600/80 text-white',
+      count: 'bg-blue-800 text-white',
     },
     EasyEDA: {
-      badge: "bg-sky-500/80 text-white",
-      count: "bg-sky-700 text-white",
+      badge: 'bg-sky-500/80 text-white',
+      count: 'bg-sky-700 text-white',
     },
     None: {
-      badge: "bg-[#4a4540] text-[#a8a090]",
-      count: "bg-[#3a3530] text-[#a8a090]",
+      badge: 'bg-[#4a4540] text-[#a8a090]',
+      count: 'bg-[#3a3530] text-[#a8a090]',
     },
-  };
+  }
 
-  const selectedStyle = styles[software as keyof typeof styles] || styles.None;
+  const selectedStyle = styles[software as keyof typeof styles] || styles.None
 
   return (
     <span
@@ -43,5 +37,5 @@ export const HeaderBadge = ({
         {count}
       </span>
     </span>
-  );
-};
+  )
+}

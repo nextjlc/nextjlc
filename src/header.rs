@@ -6,7 +6,7 @@
  */
 
 use chrono::Local;
-use rand::Rng;
+use rand::RngExt;
 
 /// Internal struct holding the generated header components.
 struct HeaderInfo {

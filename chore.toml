@@ -12,5 +12,5 @@ enabled = true
 ".tsx" = "/* $path$file */"
 
 [path_comment.exclude]
-dirs = ["vite", "node_modules", "target"]
+dirs = ["vite", "node_modules", "target", "dist", "pkg"]
 patterns = []

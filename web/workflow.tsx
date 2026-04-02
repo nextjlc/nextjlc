@@ -1,15 +1,9 @@
 /* web/workflow.tsx */
 
-import { useEffect, useMemo, useState } from "react";
-import { useWorkflowStore } from "./editfile";
-import {
-  PackageSearch,
-  Archive,
-  LoaderCircle,
-  ArrowRight,
-  X,
-} from "lucide-react";
-import JSZip from "jszip";
+import { useEffect, useMemo, useState } from 'react'
+import { useWorkflowStore } from './editfile'
+import { PackageSearch, Archive, LoaderCircle, ArrowRight, X } from 'lucide-react'
+import JSZip from 'jszip'
 import {
   identifyFileType,
   getGerberHeader,
@@ -22,9 +16,9 @@ import {
   isDrillFile,
   processDrillFiles,
   type ValidationResult,
-} from "./filetype";
-import { HeaderBadge } from "./header-badge";
-import type { GerberFile, ProcessedGerberFile } from "./editfile";
+} from './filetype'
+import { HeaderBadge } from './header-badge'
+import type { GerberFile, ProcessedGerberFile } from './editfile'
 
 function Workflow() {
   const {
@@ -40,325 +34,299 @@ function Workflow() {
     copyFileToProcessed,
     removeFileFromProcessed,
     layerCount,
-  } = useWorkflowStore();
+  } = useWorkflowStore()
 
-  const [isAnalysisComplete, setIsAnalysisComplete] = useState(false);
-  const [renameMap, setRenameMap] = useState<Map<string, string>>(new Map());
-  const [showSponsor, setShowSponsor] = useState(false);
-  const [savedAmount, setSavedAmount] = useState(0);
+  const [isAnalysisComplete, setIsAnalysisComplete] = useState(false)
+  const [renameMap, setRenameMap] = useState<Map<string, string>>(new Map())
+  const [showSponsor, setShowSponsor] = useState(false)
+  const [savedAmount, setSavedAmount] = useState(0)
 
   // Phase 1: Analysis Progress
   useEffect(() => {
-    const allFilesAnalyzed = files.every((f) => f.software !== undefined);
+    const allFilesAnalyzed = files.every((f) => f.software !== undefined)
     if (allFilesAnalyzed) {
-      setIsAnalysisComplete(true);
-      setTimeout(() => setProgress(0), 500);
-      return;
+      setIsAnalysisComplete(true)
+      setTimeout(() => setProgress(0), 500)
+      return
     }
 
     const analyzeFiles = async () => {
-      const filesToAnalyze = files.filter(
-        (file) => file.software === undefined,
-      );
-      const total = files.length;
-      let analyzedCount = total - filesToAnalyze.length;
-      setProgress((analyzedCount / total) * 100);
+      const filesToAnalyze = files.filter((file) => file.software === undefined)
+      const total = files.length
+      let analyzedCount = total - filesToAnalyze.length
+      setProgress((analyzedCount / total) * 100)
 
       await Promise.all(
         filesToAnalyze.map(async (file) => {
           try {
-            const fullContent = await file.fileObject.async("string");
-            const headerContent = fullContent
-              .split("\n")
-              .slice(0, 10)
-              .join("\n");
-            const identifiedSoftware = await identifyFileType(headerContent);
-            setFileSoftware(file.name, identifiedSoftware || "None");
+            const fullContent = await file.fileObject.async('string')
+            const headerContent = fullContent.split('\n').slice(0, 10).join('\n')
+            const identifiedSoftware = await identifyFileType(headerContent)
+            setFileSoftware(file.name, identifiedSoftware || 'None')
           } catch (error) {
-            console.error(`Could not analyze file ${file.name}:`, error);
-            setFileSoftware(file.name, "None");
+            console.error(`Could not analyze file ${file.name}:`, error)
+            setFileSoftware(file.name, 'None')
           }
-          analyzedCount++;
-          setProgress((analyzedCount / total) * 100);
+          analyzedCount++
+          setProgress((analyzedCount / total) * 100)
         }),
-      );
-    };
+      )
+    }
 
     if (files.length > 0 && files.some((f) => f.software === undefined)) {
-      analyzeFiles();
+      analyzeFiles()
     }
-  }, [files, files.length, setFileSoftware, setProgress]);
+  }, [files, files.length, setFileSoftware, setProgress])
 
   const aggregatedBadges = useMemo(() => {
-    const stats: { [key: string]: { count: number; firstIndex: number } } = {};
+    const stats: { [key: string]: { count: number; firstIndex: number } } = {}
     files.forEach((file, index) => {
-      const software = file.software;
+      const software = file.software
       if (software) {
         if (!stats[software]) {
-          stats[software] = { count: 1, firstIndex: index };
+          stats[software] = { count: 1, firstIndex: index }
         } else {
-          stats[software].count++;
+          stats[software].count++
         }
       }
-    });
+    })
     return Object.entries(stats)
       .map(([software, data]) => ({ software, ...data }))
-      .sort((a, b) => a.firstIndex - b.firstIndex);
-  }, [files]);
+      .sort((a, b) => a.firstIndex - b.firstIndex)
+  }, [files])
 
   // Phase 2: Processing Progress
   const handleProcessClick = async () => {
     // Strict mode guard - prevents duplicate execution if component re-renders
     // while this async function is already running
     if (isProcessing) {
-      return;
+      return
     }
 
-    startProcessing();
+    startProcessing()
 
     // Increment conversion count
-    const storedTimes = localStorage.getItem("conversion_times");
-    let times = 1;
+    const storedTimes = localStorage.getItem('conversion_times')
+    let times = 1
     if (storedTimes) {
-      times = parseInt(storedTimes, 10) + 1;
+      times = parseInt(storedTimes, 10) + 1
     }
-    localStorage.setItem("conversion_times", times.toString());
+    localStorage.setItem('conversion_times', times.toString())
 
-    const originalFilenames = files.map((f) => f.name);
-    const sortedFilenames = await sortGerberFiles(originalFilenames);
-    const primaryFile = files.find((f) => f.name === sortedFilenames[0]);
-    const detectedPrimaryEda = primaryFile?.software;
+    const originalFilenames = files.map((f) => f.name)
+    const sortedFilenames = await sortGerberFiles(originalFilenames)
+    const primaryFile = files.find((f) => f.name === sortedFilenames[0])
+    const detectedPrimaryEda = primaryFile?.software
 
     // Support Altium, KiCad and EasyEDA
     if (
-      detectedPrimaryEda !== "Altium" &&
-      detectedPrimaryEda !== "KiCad" &&
-      detectedPrimaryEda !== "EasyEDA"
+      detectedPrimaryEda !== 'Altium' &&
+      detectedPrimaryEda !== 'KiCad' &&
+      detectedPrimaryEda !== 'EasyEDA'
     ) {
       alert(
-        `Processing is currently only supported for Altium, KiCad, and EasyEDA projects. The primary type detected was "${detectedPrimaryEda || "None"}".`,
-      );
-      setProcessedFiles([], null, null);
-      setProgress(0);
-      return;
+        `Processing is currently only supported for Altium, KiCad, and EasyEDA projects. The primary type detected was "${detectedPrimaryEda || 'None'}".`,
+      )
+      setProcessedFiles([], null, null)
+      setProgress(0)
+      return
     }
 
     // For EasyEDA, use Altium's processing method for filename mapping
-    const edaForMapping =
-      detectedPrimaryEda === "EasyEDA" ? "Altium" : detectedPrimaryEda;
-    const localRenameMap = await mapFilenames(originalFilenames, edaForMapping);
-    setRenameMap(localRenameMap);
+    const edaForMapping = detectedPrimaryEda === 'EasyEDA' ? 'Altium' : detectedPrimaryEda
+    const localRenameMap = await mapFilenames(originalFilenames, edaForMapping)
+    setRenameMap(localRenameMap)
 
-    const sharedHeader = await getGerberHeader();
+    const sharedHeader = await getGerberHeader()
 
     // Separate drill files from Gerber files
-    const drillFiles: GerberFile[] = [];
-    const gerberFiles: GerberFile[] = [];
+    const drillFiles: GerberFile[] = []
+    const gerberFiles: GerberFile[] = []
 
     for (const file of files) {
       if (await isDrillFile(file.name)) {
-        drillFiles.push(file);
+        drillFiles.push(file)
       } else {
-        gerberFiles.push(file);
+        gerberFiles.push(file)
       }
     }
 
-    const newProcessedFiles: ProcessedGerberFile[] = [];
-    const total = files.length;
-    let processedCount = 0;
-    setProgress(0);
+    const newProcessedFiles: ProcessedGerberFile[] = []
+    const total = files.length
+    let processedCount = 0
+    setProgress(0)
 
     // Process Gerber files (not drill files)
     for (const file of gerberFiles) {
-      let content = await file.fileObject.async("string");
-      content = content.replace(/\r\n/g, "\n");
+      let content = await file.fileObject.async('string')
+      content = content.replace(/\r\n/g, '\n')
 
-      if (
-        file.software === "Altium" ||
-        file.software === "KiCad" ||
-        file.software === "EasyEDA"
-      ) {
-        content = sharedHeader + content;
+      if (file.software === 'Altium' || file.software === 'KiCad' || file.software === 'EasyEDA') {
+        content = sharedHeader + content
       }
 
-      if (file.software === "KiCad") {
-        content = await processDCodes(content, false);
-      } else if (file.software === "Altium" || file.software === "EasyEDA") {
-        content = await processDCodes(content, true);
+      if (file.software === 'KiCad') {
+        content = await processDCodes(content, false)
+      } else if (file.software === 'Altium' || file.software === 'EasyEDA') {
+        content = await processDCodes(content, true)
       }
 
-      if (
-        file.software === "Altium" ||
-        file.software === "KiCad" ||
-        file.software === "EasyEDA"
-      ) {
-        content = await addFingerprint(content, false);
+      if (file.software === 'Altium' || file.software === 'KiCad' || file.software === 'EasyEDA') {
+        content = await addFingerprint(content, false)
       }
 
       newProcessedFiles.push({
         originalName: file.name,
         newName: localRenameMap.get(file.name) || file.name,
         content: content,
-      });
+      })
 
-      processedCount++;
-      setProgress((processedCount / total) * 100);
+      processedCount++
+      setProgress((processedCount / total) * 100)
     }
 
     // Process drill files separately
     if (drillFiles.length > 0) {
-      const drillContents: string[] = [];
-      const drillNames: string[] = [];
+      const drillContents: string[] = []
+      const drillNames: string[] = []
 
       for (const file of drillFiles) {
-        const content = await file.fileObject.async("string");
-        drillContents.push(content.replace(/\r\n/g, "\n"));
-        drillNames.push(file.name);
-        processedCount++;
-        setProgress((processedCount / total) * 100);
+        const content = await file.fileObject.async('string')
+        drillContents.push(content.replace(/\r\n/g, '\n'))
+        drillNames.push(file.name)
+        processedCount++
+        setProgress((processedCount / total) * 100)
       }
 
-      const drillResult = await processDrillFiles(drillContents, drillNames);
+      const drillResult = await processDrillFiles(drillContents, drillNames)
 
       // Show warnings for skipped blind/buried vias
       if (drillResult.warnings.length > 0) {
-        console.warn("Drill processing warnings:");
-        drillResult.warnings.forEach((w) => console.warn(`- ${w}`));
+        console.warn('Drill processing warnings:')
+        drillResult.warnings.forEach((w) => console.warn(`- ${w}`))
         alert(
-          `Drill file warnings:\n\n${drillResult.warnings.join("\n")}\n\nProcessing will continue with through-hole files only.`,
-        );
+          `Drill file warnings:\n\n${drillResult.warnings.join('\n')}\n\nProcessing will continue with through-hole files only.`,
+        )
       }
 
       // Add generated PTH file
       if (drillResult.has_pth && drillResult.pth_content) {
         newProcessedFiles.push({
-          originalName: "[merged PTH drills]",
-          newName: "Drill_PTH_Through.DRL",
+          originalName: '[merged PTH drills]',
+          newName: 'Drill_PTH_Through.DRL',
           content: drillResult.pth_content,
-        });
+        })
       }
 
       // Add generated NPTH file
       if (drillResult.has_npth && drillResult.npth_content) {
         newProcessedFiles.push({
-          originalName: "[merged NPTH drills]",
-          newName: "Drill_NPTH_Through.DRL",
+          originalName: '[merged NPTH drills]',
+          newName: 'Drill_NPTH_Through.DRL',
           content: drillResult.npth_content,
-        });
+        })
       }
 
-      drillResult.free();
+      drillResult.free()
     }
 
-    const finalFilenames = newProcessedFiles.map((f) => f.newName);
-    const validationResult: ValidationResult =
-      await validateGerberFiles(finalFilenames);
+    const finalFilenames = newProcessedFiles.map((f) => f.newName)
+    const validationResult: ValidationResult = await validateGerberFiles(finalFilenames)
 
     if (!validationResult.is_valid) {
-      const errorMessages = validationResult.errors.join("\n");
-      alert(`Gerber file validation failed:\n\n${errorMessages}`);
-      setProcessedFiles([], null, null);
-      setProgress(0);
-      validationResult.free();
-      return;
+      const errorMessages = validationResult.errors.join('\n')
+      alert(`Gerber file validation failed:\n\n${errorMessages}`)
+      setProcessedFiles([], null, null)
+      setProgress(0)
+      validationResult.free()
+      return
     }
 
     if (validationResult.warnings.length > 0) {
-      console.warn("Validation Warnings:");
-      validationResult.warnings.forEach((w) => console.warn(`- ${w}`));
+      console.warn('Validation Warnings:')
+      validationResult.warnings.forEach((w) => console.warn(`- ${w}`))
     }
 
     // Check if the guide file already exists in the processed files
-    const guideFileName = "PCB下单必读.txt";
-    const hasGuideFile = newProcessedFiles.some(
-      (file) => file.newName === guideFileName,
-    );
+    const guideFileName = 'PCB下单必读.txt'
+    const hasGuideFile = newProcessedFiles.some((file) => file.newName === guideFileName)
 
     if (!hasGuideFile) {
-      const guideContent = await getOrderGuideText();
+      const guideContent = await getOrderGuideText()
       newProcessedFiles.push({
         originalName: guideFileName,
         newName: guideFileName,
         content: guideContent,
-      });
+      })
     }
 
-    setProcessedFiles(
-      newProcessedFiles,
-      detectedPrimaryEda,
-      validationResult.layer_count,
-    );
-    validationResult.free();
-    setTimeout(() => setProgress(0), 500);
-  };
+    setProcessedFiles(newProcessedFiles, detectedPrimaryEda, validationResult.layer_count)
+    validationResult.free()
+    setTimeout(() => setProgress(0), 500)
+  }
 
   const handleDownloadClick = async () => {
-    if (
-      !originalZipName ||
-      processedFiles.length === 0 ||
-      !primaryEda ||
-      layerCount === null
-    )
-      return;
+    if (!originalZipName || processedFiles.length === 0 || !primaryEda || layerCount === null)
+      return
 
-    const baseName = originalZipName.replace(/\.zip$/i, "");
-    let edaSuffix = "";
-    if (primaryEda === "Altium") {
-      edaSuffix = "AD";
-    } else if (primaryEda === "KiCad") {
-      edaSuffix = "Ki";
-    } else if (primaryEda === "EasyEDA") {
-      edaSuffix = "ED";
+    const baseName = originalZipName.replace(/\.zip$/i, '')
+    let edaSuffix = ''
+    if (primaryEda === 'Altium') {
+      edaSuffix = 'AD'
+    } else if (primaryEda === 'KiCad') {
+      edaSuffix = 'Ki'
+    } else if (primaryEda === 'EasyEDA') {
+      edaSuffix = 'ED'
     }
 
-    const layerSuffix = layerCount > 0 ? `-L${layerCount}` : "";
-    const newZipName = `${baseName}-${edaSuffix}${layerSuffix}.zip`;
+    const layerSuffix = layerCount > 0 ? `-L${layerCount}` : ''
+    const newZipName = `${baseName}-${edaSuffix}${layerSuffix}.zip`
 
-    const zip = new JSZip();
+    const zip = new JSZip()
     processedFiles.forEach((file) => {
-      zip.file(file.newName, file.content);
-    });
+      zip.file(file.newName, file.content)
+    })
 
-    const blob = await zip.generateAsync({ type: "blob" });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = newZipName;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(link.href);
+    const blob = await zip.generateAsync({ type: 'blob' })
+    const link = document.createElement('a')
+    link.href = URL.createObjectURL(blob)
+    link.download = newZipName
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(link.href)
 
     // Sponsor Logic
-    const storedTimes = localStorage.getItem("conversion_times");
-    const times = storedTimes ? parseInt(storedTimes, 10) : 1;
+    const storedTimes = localStorage.getItem('conversion_times')
+    const times = storedTimes ? parseInt(storedTimes, 10) : 1
 
-    setSavedAmount(times * 20);
-    setShowSponsor(true);
-  };
+    setSavedAmount(times * 20)
+    setShowSponsor(true)
+  }
 
   const handleCopyFile = async (file: GerberFile) => {
     try {
-      const content = await file.fileObject.async("string");
-      const newName = renameMap.get(file.name) || file.name;
+      const content = await file.fileObject.async('string')
+      const newName = renameMap.get(file.name) || file.name
       const processedFile: ProcessedGerberFile = {
         originalName: file.name,
         newName: newName,
         content: content,
-      };
-      copyFileToProcessed(processedFile);
+      }
+      copyFileToProcessed(processedFile)
     } catch (error) {
-      console.error(`Failed to copy file ${file.name}:`, error);
-      alert(`Could not read and copy file: ${file.name}`);
+      console.error(`Failed to copy file ${file.name}:`, error)
+      alert(`Could not read and copy file: ${file.name}`)
     }
-  };
+  }
 
   return (
-    <div className="w-full max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8">
+    <div className='w-full max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8'>
       {/* Left Box */}
-      <div className="relative">
-        <div className="flex justify-between items-center mb-2">
-          <h2 className="text-lg font-semibold text-(--color-text) flex items-center">
-            <PackageSearch className="h-5 w-5 mr-2" />
+      <div className='relative'>
+        <div className='flex justify-between items-center mb-2'>
+          <h2 className='text-lg font-semibold text-(--color-text) flex items-center'>
+            <PackageSearch className='h-5 w-5 mr-2' />
             Gerber Files
             {aggregatedBadges.map(({ software, count }) => (
               <HeaderBadge key={software} software={software} count={count} />
@@ -367,32 +335,26 @@ function Workflow() {
           <button
             onClick={handleProcessClick}
             disabled={!isAnalysisComplete || isProcessing}
-            className="px-3 py-1 bg-(--color-accent) text-white text-sm font-semibold rounded-md disabled:bg-(--color-disabled) disabled:cursor-not-allowed hover:bg-(--color-accent-hover) transition-colors flex items-center gap-2"
+            className='px-3 py-1 bg-(--color-accent) text-white text-sm font-semibold rounded-md disabled:bg-(--color-disabled) disabled:cursor-not-allowed hover:bg-(--color-accent-hover) transition-colors flex items-center gap-2'
           >
-            {isProcessing ? (
-              <LoaderCircle className="h-4 w-4 animate-spin" />
-            ) : (
-              "Process"
-            )}
+            {isProcessing ? <LoaderCircle className='h-4 w-4 animate-spin' /> : 'Process'}
           </button>
         </div>
-        <div className="p-4 border-2 border-dashed border-(--color-border) rounded-lg h-96 flex flex-col">
-          <ul className="flex-1 overflow-y-auto">
+        <div className='p-4 border-2 border-dashed border-(--color-border) rounded-lg h-96 flex flex-col'>
+          <ul className='flex-1 overflow-y-auto'>
             {files.map((file) => (
               <li
                 key={file.name}
-                className="group px-3 py-0.5 rounded-sm transition-colors hover:bg-(--color-surface-tertiary) flex justify-between items-center"
+                className='group px-3 py-0.5 rounded-sm transition-colors hover:bg-(--color-surface-tertiary) flex justify-between items-center'
               >
-                <span className="text-sm text-(--color-text) truncate">
-                  {file.name}
-                </span>
+                <span className='text-sm text-(--color-text) truncate'>{file.name}</span>
                 <button
                   onClick={() => handleCopyFile(file)}
-                  className="opacity-0 group-hover:opacity-100 transition-opacity text-(--color-subtext) hover:text-(--color-accent)"
-                  title="Copy this file to the export list"
+                  className='opacity-0 group-hover:opacity-100 transition-opacity text-(--color-subtext) hover:text-(--color-accent)'
+                  title='Copy this file to the export list'
                   disabled={processedFiles.length === 0}
                 >
-                  <ArrowRight className="h-4 w-4" />
+                  <ArrowRight className='h-4 w-4' />
                 </button>
               </li>
             ))}
@@ -401,53 +363,49 @@ function Workflow() {
       </div>
 
       {/* Right Box */}
-      <div className="relative">
-        <div className="flex justify-between items-center mb-2">
-          <h2 className="text-lg font-semibold text-(--color-text) flex items-center">
-            <Archive className="h-5 w-5 mr-2" />
+      <div className='relative'>
+        <div className='flex justify-between items-center mb-2'>
+          <h2 className='text-lg font-semibold text-(--color-text) flex items-center'>
+            <Archive className='h-5 w-5 mr-2' />
             Export Preview
           </h2>
           <button
             onClick={handleDownloadClick}
             disabled={processedFiles.length === 0 || isProcessing}
-            className="px-3 py-1 bg-(--color-accent) text-white text-sm font-semibold rounded-md disabled:bg-(--color-disabled) disabled:cursor-not-allowed hover:bg-(--color-accent-hover) transition-colors flex items-center gap-2"
+            className='px-3 py-1 bg-(--color-accent) text-white text-sm font-semibold rounded-md disabled:bg-(--color-disabled) disabled:cursor-not-allowed hover:bg-(--color-accent-hover) transition-colors flex items-center gap-2'
           >
             Download
           </button>
         </div>
-        <div className="p-4 border-2 border-dashed border-(--color-border) rounded-lg h-96 flex flex-col">
+        <div className='p-4 border-2 border-dashed border-(--color-border) rounded-lg h-96 flex flex-col'>
           {processedFiles.length > 0 ? (
-            <ul className="flex-1 overflow-y-auto">
+            <ul className='flex-1 overflow-y-auto'>
               {processedFiles.map((file) => (
                 <li
                   key={file.originalName}
-                  className="group px-3 py-0.5 rounded-sm transition-colors hover:bg-(--color-surface-tertiary) flex justify-between items-center"
+                  className='group px-3 py-0.5 rounded-sm transition-colors hover:bg-(--color-surface-tertiary) flex justify-between items-center'
                 >
-                  <span className="text-sm text-(--color-text) truncate">
-                    {file.newName}
-                  </span>
+                  <span className='text-sm text-(--color-text) truncate'>{file.newName}</span>
                   <button
                     onClick={() => removeFileFromProcessed(file.originalName)}
-                    className="opacity-0 group-hover:opacity-100 transition-opacity text-(--color-subtext) hover:text-red-500"
-                    title="Remove this file from the export list"
+                    className='opacity-0 group-hover:opacity-100 transition-opacity text-(--color-subtext) hover:text-red-500'
+                    title='Remove this file from the export list'
                   >
-                    <X className="h-4 w-4" />
+                    <X className='h-4 w-4' />
                   </button>
                 </li>
               ))}
             </ul>
           ) : (
-            <div className="flex-1 flex items-center justify-center text-center">
-              <p className="text-(--color-subtext)">
+            <div className='flex-1 flex items-center justify-center text-center'>
+              <p className='text-(--color-subtext)'>
                 {!isAnalysisComplete && files.length > 0 && !isProcessing
-                  ? "Analyzing files..."
-                  : ""}
-                {isProcessing ? "Processing files..." : ""}
-                {isAnalysisComplete &&
-                !isProcessing &&
-                processedFiles.length === 0
+                  ? 'Analyzing files...'
+                  : ''}
+                {isProcessing ? 'Processing files...' : ''}
+                {isAnalysisComplete && !isProcessing && processedFiles.length === 0
                   ? "Click 'Process' to begin."
-                  : ""}
+                  : ''}
               </p>
             </div>
           )}
@@ -456,33 +414,29 @@ function Workflow() {
 
       {showSponsor && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-md"
+          className='fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-md'
           onClick={() => setShowSponsor(false)}
         >
           <button
-            className="fixed top-8 right-8 text-white cursor-pointer z-60 hover:opacity-80 transition-opacity"
+            className='fixed top-8 right-8 text-white cursor-pointer z-60 hover:opacity-80 transition-opacity'
             onClick={() => setShowSponsor(false)}
           >
-            <X className="w-10 h-10" />
+            <X className='w-10 h-10' />
           </button>
 
           <div
-            className="relative max-w-sm w-full mx-4 bg-(--color-bg-alt) rounded-xl overflow-hidden shadow-2xl"
+            className='relative max-w-sm w-full mx-4 bg-(--color-bg-alt) rounded-xl overflow-hidden shadow-2xl'
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="bg-(--color-accent) p-4 text-center text-(--color-text) font-bold text-xl">
+            <div className='bg-(--color-accent) p-4 text-center text-(--color-text) font-bold text-xl'>
               NeXTJLC 已经帮你节省了 ¥{savedAmount}
             </div>
-            <img
-              src="/sponsor.webp"
-              alt="Sponsor"
-              className="w-full h-auto block"
-            />
+            <img src='/sponsor.webp' alt='Sponsor' className='w-full h-auto block' />
           </div>
         </div>
       )}
     </div>
-  );
+  )
 }
 
-export default Workflow;
+export default Workflow
